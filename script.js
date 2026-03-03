@@ -553,22 +553,10 @@ function initLoading() {
     // Polling sync (2 seconds as requested)
     setInterval(() => StorageManager.sync(), 2000);
 
-    // Init music system
-    MusicManager.init();
-
-    // Loading SFX on first user interaction
-    const sfx = document.getElementById('loading-sfx');
-    sfx.volume = 0.3;
-    const sfxAttempt = setInterval(() => {
-        sfx.play().then(() => clearInterval(sfxAttempt)).catch(() => { });
-    }, 500);
-
     setTimeout(() => {
         document.getElementById('loading-screen').classList.add('fade-out');
         setTimeout(() => {
-            clearInterval(sfxAttempt);
             showScreen('home-screen');
-            MusicManager.play(); // Start bg music on home screen
         }, 1000);
     }, 4000);
 }
@@ -586,76 +574,6 @@ function initParticles() {
         container.appendChild(p);
     }
 }
-
-// --- MUSIC MANAGER ---
-// Replace the bg-music src with a real looping ambient track
-// You can swap in any .mp3 URL you own or have rights to use
-const MUSIC_TRACKS = {
-    home: 'https://www.soundjay.com/ambient/sounds/no-noise-1.mp3',
-    admin: 'https://www.soundjay.com/ambient/sounds/no-noise-1.mp3',
-    lobby: 'https://www.soundjay.com/ambient/sounds/no-noise-1.mp3',
-    quiz: 'https://www.soundjay.com/ambient/sounds/no-noise-1.mp3',
-    results: 'https://www.soundjay.com/ambient/sounds/no-noise-1.mp3'
-};
-
-const MusicManager = {
-    audio: null,
-    muted: false,
-    btnEl: null,
-    iconEl: null,
-    labelEl: null,
-
-    init() {
-        this.audio = document.getElementById('bg-music');
-        this.btnEl = document.getElementById('music-toggle');
-        this.iconEl = document.getElementById('music-icon');
-        this.labelEl = document.getElementById('music-label');
-        this.audio.volume = 0.2;
-
-        // Restore mute state from localStorage
-        this.muted = localStorage.getItem('BELMONTS_MUSIC_MUTED') === 'true';
-        this.updateBtn();
-
-        this.btnEl.onclick = () => this.toggle();
-    },
-
-    play() {
-        if (this.muted) return;
-        this.audio.play().catch(() => {
-            // Autoplay blocked - will play at next interaction
-            const resume = () => {
-                if (!this.muted) this.audio.play().catch(() => { });
-                document.removeEventListener('click', resume);
-            };
-            document.addEventListener('click', resume);
-        });
-    },
-
-    toggle() {
-        this.muted = !this.muted;
-        localStorage.setItem('BELMONTS_MUSIC_MUTED', this.muted);
-        if (this.muted) {
-            this.audio.pause();
-        } else {
-            this.audio.play().catch(() => { });
-        }
-        this.updateBtn();
-    },
-
-    updateBtn() {
-        if (this.muted) {
-            this.btnEl.classList.add('muted');
-            this.iconEl.textContent = '🔇';
-            this.iconEl.className = '';
-            this.labelEl.textContent = 'MUSIC OFF';
-        } else {
-            this.btnEl.classList.remove('muted');
-            this.iconEl.textContent = '🎵';
-            this.iconEl.className = 'music-icon-spin';
-            this.labelEl.textContent = 'MUSIC ON';
-        }
-    }
-};
 
 initLoading();
 
