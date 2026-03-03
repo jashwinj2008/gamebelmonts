@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BELMONTS: Tech Arena</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="loading-screen" class="screen active">
+        <div class="terror-frame">
+            <img src="https://i.postimg.cc/43fPDHcJ/Whats-App-Image-2026-03-01-at-9-27-13-PM.jpg" alt="Arena Badge"
+                class="loading-image">
+            <div class="loading-bar-container">
+                <div class="loading-bar-fill"></div>
+            </div>
+            <p class="loading-text">DECRYPTING ARENA ACCESS...</p>
+        </div>
+        <div class="welcome-container terror-frame">
+            <h2 class="welcome-text">WELCOME TO CODE ARENA</h2>
+        </div>
+    </div>
+    <audio id="loading-sfx" src="https://www.soundjay.com/mechanical/sounds/power-up-1.mp3"></audio>
+
+    <div id="bg-container">
+        <div class="gradient-bg"></div>
+        <div class="grid-floor"></div>
+        <div id="particles-container"></div>
+        <div class="circuit-pattern corner-tl"></div>
+        <div class="circuit-pattern corner-br"></div>
+    </div>
+
+    <main id="app">
+        <!-- Home Screen -->
+        <section id="home-screen" class="screen">
+            <div class="hero">
+                <div class="terror-frame banner">
+                    <img src="https://i.postimg.cc/43fPDHcJ/Whats-App-Image-2026-03-01-at-9-27-13-PM.jpg"
+                        alt="Arena Badge" class="home-banner-img">
+                </div>
+                <h1 class="glitch-title" data-text="BELMONTS">BELMONTS</h1>
+                <p class="subtitle">Enter the Tech War Arena</p>
+                <div class="input-group">
+                    <input type="text" id="player-name" placeholder="ENTER CODENAME" maxlength="15">
+                    <button id="start-battle" class="neon-button">START BATTLE</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lobby Screen -->
+        <section id="lobby-screen" class="screen">
+            <h2 class="section-title">WAR LOBBY</h2>
+            <div class="lobby-container glass">
+                <div id="player-list" class="player-grid">
+                    <!-- Players added via JS -->
+                </div>
+                <div class="lobby-controls">
+                    <button id="launch-game" class="neon-button purple">LAUNCH MISSION</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Screen -->
+        <section id="quiz-screen" class="screen">
+            <div class="quiz-header">
+                <div class="timer-container">
+                    <div id="timer-bar"></div>
+                </div>
+                <div class="score-display">DATA SYNC: <span id="current-score">0</span></div>
+            </div>
+            <div class="question-card glass">
+                <p id="question-text">Initializing encounter...</p>
+                <div id="answer-grid" class="answer-grid">
+                    <!-- Answers added via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Screen -->
+        <section id="result-screen" class="screen">
+            <h2 class="section-title">BATTLE REPORT</h2>
+            <div class="result-container glass">
+                <div id="leaderboard" class="leaderboard">
+                    <!-- Leaderboard added via JS -->
+                </div>
+                <button id="play-again" class="neon-button pulse">RE-REBOOT</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
