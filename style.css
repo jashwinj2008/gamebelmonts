@@ -292,8 +292,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    padding: 20px;
+    min-height: 100vh;
+    width: 100%;
 }
 
 .screen {
@@ -301,8 +301,12 @@ body {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: 800px;
     animation: fadeIn 0.5s ease-out;
+}
+
+#home-screen {
+    max-width: none;
+    padding: 0;
 }
 
 .screen.active {
@@ -1088,11 +1092,14 @@ input:focus {
     align-items: center;
     justify-content: center;
     gap: 60px;
-    width: 100%; /* Ensure full width */
+    width: 100%;
+    /* Ensure full width */
     max-width: 1400px;
-    margin: 0 auto; /* Center horizontally */
-    padding: 20px;
-    height: 100vh; /* Center vertically */
+    margin: 0 auto;
+    /* Center horizontally */
+    padding: 40px;
+    min-height: 90vh;
+    /* Center vertically */
 }
 
 .hero {
