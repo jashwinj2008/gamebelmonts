@@ -1502,7 +1502,6 @@ select.admin-input option {
         flex-direction: column;
         gap: 40px;
     }
-
     .rules-panel {
         max-width: 90%;
         margin-top: 20px;
