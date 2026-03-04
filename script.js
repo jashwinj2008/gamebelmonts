@@ -2,7 +2,7 @@
 
 // Supabase Configuration
 const supabaseUrl = 'https://loousnbpmmjrwnfwkqxs.supabase.co';
-const supabaseKey = 'loousnbpmmjrwnfwkqxs'; // NOTE: This project ID usually needs the long Anon Key for production
+const supabaseKey = 'sb_publishable_SBrp-zgLSnJAQb8_XAyECQ_Vj8zF5kN';
 const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
 
 // Core State
