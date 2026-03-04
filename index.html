@@ -26,21 +26,15 @@
                 <div class="loading-bar-fill"></div>
             </div>
             <p class="loading-text">DECRYPTING ARENA ACCESS...</p>
-            <button id="force-enter-btn" class="neon-button small"
-                style="margin-top:2rem; display:none; font-size: 0.8rem; padding: 0.5rem 1rem;"
-                onclick="forceRevealArena()">FORCE OVERRIDE</button>
+            <!-- Force override button removed -->
         </div>
         <div class="welcome-container terror-frame">
             <h2 class="welcome-text">WELCOME TO CODE ARENA</h2>
         </div>
     </div>
-    <!-- Script that shows the force button if it takes too long -->
+    <!-- Loading page auto-moves to home after 4 seconds -->
     <script>
         setTimeout(function () {
-            var btn = document.getElementById('force-enter-btn');
-            if (btn) btn.style.display = 'block';
-        }, 5000);
-        function forceRevealArena() {
             var loader = document.getElementById('loading-screen');
             if (loader) {
                 loader.classList.remove('active');
@@ -50,24 +44,19 @@
             if (app) {
                 app.style.display = 'flex';
             }
-            if (typeof showScreen === 'function') {
-                showScreen('home-screen');
-            } else {
-                // Fallback: show home-screen directly without script.js
-                var screens = document.querySelectorAll('.screen');
-                for (var i = 0; i < screens.length; i++) {
-                    screens[i].classList.remove('active');
-                    screens[i].style.display = 'none';
-                    screens[i].style.opacity = '';
-                }
-                var home = document.getElementById('home-screen');
-                if (home) {
-                    home.classList.add('active');
-                    home.style.display = 'flex';
-                    home.style.opacity = '1';
-                }
+            var screens = document.querySelectorAll('.screen');
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].classList.remove('active');
+                screens[i].style.display = 'none';
+                screens[i].style.opacity = '';
             }
-        }
+            var home = document.getElementById('home-screen');
+            if (home) {
+                home.classList.add('active');
+                home.style.display = 'flex';
+                home.style.opacity = '1';
+            }
+        }, 4000);
     </script>
     <!-- Background & FX -->
     <div id="bg-container">
