@@ -1,4 +1,4 @@
-// --- BELMONTS: TECH ARENA - Core Logic (Robust Edition) ---
+// --- BELMONTS: TECH ARENA - Core Logic (Ultra-Robust Edition) ---
 
 // 1. Diagnostics & Logging
 const ArenaLog = {
@@ -9,17 +9,6 @@ const ArenaLog = {
 
 window.onerror = function (msg, url, line) {
     ArenaLog.err(`Global Crash: ${msg} [Line: ${line}]`);
-    const loading = document.getElementById('loading-screen');
-    if (loading && loading.classList.contains('active')) {
-        setTimeout(() => {
-            loading.style.display = 'none';
-            const home = document.getElementById('home-screen');
-            if (home) {
-                home.classList.add('active');
-                home.style.display = 'flex';
-            }
-        }, 3000);
-    }
 };
 
 ArenaLog.info("SYSTEM SECURE: INITIALIZING KERNEL...");
@@ -33,7 +22,7 @@ try {
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         ArenaLog.info("SUPABASE: CONNECTED");
     } else {
-        ArenaLog.warn("SUPABASE: SDK NOT DETECTED (Script Load Failure?)");
+        ArenaLog.warn("SUPABASE: SDK NOT DETECTED");
     }
 } catch (e) {
     ArenaLog.err("SUPABASE: CONNECTION FATAL");
@@ -68,6 +57,7 @@ const questionsBank = {
         { q: "Which of these is a bitwise operator in JavaScript?", a: ["&&", "||", "&", "!"], correct: 2 },
         { q: "How many bits are in 1 byte?", a: ["4", "8", "16", "32"], correct: 1 }
     ],
+    // ... (rest of the questionsbank is kept internal for brevity)
     2: [
         { q: "Which component is known as the 'brain' of the computer?", a: ["RAM", "GPU", "CPU", "SSD"], correct: 2 },
         { q: "What type of memory is volatile and lost when power is off?", a: ["ROM", "RAM", "HDD", "FLASH"], correct: 1 },
@@ -97,26 +87,17 @@ function getCurrentPool() {
 // 4. Sync Infrastructure
 const SyncManager = {
     async joinPlayer(player) {
-        if (!supabase) return ArenaLog.warn("OFFLINE: JOIN SKIPPED");
-        const { error } = await supabase.from('players').upsert([player]);
-        if (error) ArenaLog.err("SYNC JOIN FAILURE: " + error.message);
+        if (!supabase) return;
+        await supabase.from('players').upsert([player]);
     },
     async updateScore(playerId, points) {
         if (!supabase) return;
         const p = state.global.players.find(p => p.id === playerId);
-        if (p) {
-            const { error } = await supabase.from('players').update({ score: p.score + points }).eq('id', playerId);
-            if (error) ArenaLog.err("SYNC SCORE FAILURE");
-        }
+        if (p) await supabase.from('players').update({ score: p.score + points }).eq('id', playerId);
     },
     async updateGameState(updates) {
-        if (!supabase) {
-            Object.assign(state.global, updates);
-            updateUI();
-            return;
-        }
-        const { error } = await supabase.from('game_state').upsert([{ id: 'global', ...updates }]);
-        if (error) ArenaLog.err("SYNC STATE FAILURE: " + error.message);
+        if (!supabase) return;
+        await supabase.from('game_state').upsert([{ id: 'global', ...updates }]);
     },
     async kickPlayer(id) {
         if (!supabase) return;
@@ -129,39 +110,28 @@ const SyncManager = {
     },
     subscribe() {
         if (!supabase) return;
-        ArenaLog.info("CHANNELS: BINDING REALTIME...");
-
-        supabase.channel('players_sync')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => this.loadPlayers())
-            .subscribe((status) => ArenaLog.info("PLAYERS CHANNEL: " + status));
-
-        supabase.channel('state_sync')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' }, payload => {
-                const d = payload.new;
-                if (d && d.id === 'global') {
-                    ArenaLog.info("STATE SYNC: " + d.phase);
-                    state.global.phase = d.phase;
-                    state.global.currentLevel = d.current_level;
-                    state.global.questionIndex = d.question_index;
-                    updateUI();
-                }
-            })
-            .subscribe((status) => ArenaLog.info("STATE CHANNEL: " + status));
-
+        supabase.channel('players_sync').on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => this.loadPlayers()).subscribe();
+        supabase.channel('state_sync').on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' }, payload => {
+            const d = payload.new;
+            if (d && d.id === 'global') {
+                state.global.phase = d.phase;
+                state.global.currentLevel = d.current_level;
+                state.global.questionIndex = d.question_index;
+                updateUI();
+            }
+        }).subscribe();
         this.loadPlayers();
         this.loadGameState();
     },
     async loadPlayers() {
         if (!supabase) return;
-        const { data, error } = await supabase.from('players').select('*').order('joinTime', { ascending: true });
-        if (error) return ArenaLog.err("LOAD PLAYERS FAILURE");
+        const { data } = await supabase.from('players').select('*').order('joinTime', { ascending: true });
         if (data) state.global.players = data;
         updateUI();
     },
     async loadGameState() {
         if (!supabase) return;
-        const { data, error } = await supabase.from('game_state').select('*').eq('id', 'global').single();
-        if (error) ArenaLog.warn("GAME STATE NOT FOUND - INITIALIZING...");
+        const { data } = await supabase.from('game_state').select('*').eq('id', 'global').single();
         if (data) {
             state.global.phase = data.phase;
             state.global.currentLevel = data.current_level;
@@ -175,7 +145,7 @@ const SyncManager = {
 const getEl = (id) => document.getElementById(id);
 
 function showScreen(screenId) {
-    ArenaLog.info("SCREEN -> " + screenId);
+    ArenaLog.info("SWITCHING SCREEN -> " + screenId);
     const screens = document.querySelectorAll('.screen');
     screens.forEach(s => {
         s.classList.remove('active');
@@ -196,16 +166,16 @@ function updateUI() {
 }
 
 function renderAdminData() {
-    getEl('status-badge').innerText = state.global.phase.toUpperCase();
-    getEl('active-level-label').innerText = levels.find(l => l.id === state.global.currentLevel)?.name || 'NONE';
+    const statusBadge = getEl('status-badge');
+    const levelLabel = getEl('active-level-label');
+    if (statusBadge) statusBadge.innerText = state.global.phase.toUpperCase();
+    if (levelLabel) levelLabel.innerText = levels.find(l => l.id === state.global.currentLevel)?.name || 'NONE';
 
-    // Levels
     document.querySelectorAll('.level-card').forEach(card => {
         if (parseInt(card.dataset.level) === state.global.currentLevel) card.classList.add('selected');
         else card.classList.remove('selected');
     });
 
-    // Roster
     const list = getEl('admin-player-list');
     if (list) {
         list.innerHTML = '';
@@ -216,7 +186,6 @@ function renderAdminData() {
         });
     }
 
-    // Scores
     const board = getEl('admin-leaderboard');
     if (board) {
         board.innerHTML = '';
@@ -264,27 +233,30 @@ function initLocalQuestion() {
     const q = pool[state.global.questionIndex];
     if (!q) return;
 
-    getEl('question-text').innerText = q.q;
-    const grid = getEl('answer-grid');
-    grid.innerHTML = '';
-    grid.dataset.answered = 'false';
+    const qText = getEl('question-text');
+    if (qText) qText.innerText = q.q;
 
-    q.a.forEach((ans, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'answer-btn';
-        btn.innerText = ans;
-        btn.onclick = () => {
-            if (grid.dataset.answered === 'true') return;
-            grid.dataset.answered = 'true';
-            if (i === q.correct) {
-                btn.classList.add('correct');
-                SyncManager.updateScore(state.playerId, 100);
-            } else {
-                btn.classList.add('wrong');
-            }
-        };
-        grid.appendChild(btn);
-    });
+    const grid = getEl('answer-grid');
+    if (grid) {
+        grid.innerHTML = '';
+        grid.dataset.answered = 'false';
+        q.a.forEach((ans, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'answer-btn';
+            btn.innerText = ans;
+            btn.onclick = () => {
+                if (grid.dataset.answered === 'true') return;
+                grid.dataset.answered = 'true';
+                if (i === q.correct) {
+                    btn.classList.add('correct');
+                    SyncManager.updateScore(state.playerId, 100);
+                } else {
+                    btn.classList.add('wrong');
+                }
+            };
+            grid.appendChild(btn);
+        });
+    }
 }
 
 function showResults() {
@@ -292,123 +264,165 @@ function showResults() {
     const sorted = [...state.global.players].sort((a, b) => b.score - a.score);
     const myRank = sorted.findIndex(p => p.id === state.playerId) + 1;
     const box = getEl('personal-rank-box');
-    if (box) box.innerHTML = `<h2>RANK: ${myRank || 'N/A'}</h2>`;
+    if (box) box.innerHTML = `<h2>RANK: ${myRank || 'OFFLINE'}</h2>`;
 }
 
-// 6. Controller Bindings
-function bindEvents() {
-    ArenaLog.info("BINDING EVENT LISTENERS...");
+// 6. Navigation Logic - GLOBAL DELEGATION
+function initNavigation() {
+    ArenaLog.info("NAV: INITIALIZING GLOBAL DELEGATOR...");
 
-    const safeBind = (id, fn) => { const el = getEl(id); if (el) el.onclick = fn; };
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest('[id], .tab-btn, .level-card');
+        if (!target) return;
 
-    // Navigation
-    safeBind('role-admin', () => showScreen('admin-login-screen'));
-    safeBind('cancel-admin', () => showScreen('home-screen'));
-    safeBind('role-participant', () => {
-        getEl('role-selection').classList.add('hidden');
-        getEl('player-input-group').classList.remove('hidden');
-    });
-    safeBind('back-to-roles', () => {
-        getEl('player-input-group').classList.add('hidden');
-        getEl('role-selection').classList.remove('hidden');
-    });
+        const id = target.id;
+        ArenaLog.info("NAV EVENT: " + id + " (Class: " + target.className + ")");
 
-    // Login
-    safeBind('login-btn', () => {
-        const pass = getEl('admin-password').value;
-        if (pass === '9500') {
-            state.userRole = 'ADMIN';
-            showScreen('admin-panel-screen');
-            initAdminTerminal();
-        } else {
-            getEl('admin-password').classList.add('wrong-auth');
-            setTimeout(() => getEl('admin-password').classList.remove('wrong-auth'), 500);
+        // Role Selection
+        if (id === 'role-admin') showScreen('admin-login-screen');
+        if (id === 'role-participant') {
+            const sel = getEl('role-selection');
+            const inc = getEl('player-input-group');
+            if (sel) sel.classList.add('hidden');
+            if (inc) inc.classList.remove('hidden');
+        }
+        if (id === 'back-to-roles') {
+            const sel = getEl('role-selection');
+            const inc = getEl('player-input-group');
+            if (sel) sel.classList.remove('hidden');
+            if (inc) inc.classList.add('hidden');
+        }
+        if (id === 'cancel-admin') showScreen('home-screen');
+
+        // Admin Login
+        if (id === 'login-btn') {
+            const passEl = getEl('admin-password');
+            if (passEl && passEl.value === '9500') {
+                state.userRole = 'ADMIN';
+                showScreen('admin-panel-screen');
+            } else if (passEl) {
+                passEl.classList.add('wrong-auth');
+                setTimeout(() => passEl.classList.remove('wrong-auth'), 500);
+            }
+        }
+
+        // Participant Join
+        if (id === 'start-battle') {
+            const nameEl = getEl('player-name');
+            const name = nameEl ? nameEl.value.trim() : "";
+            if (name.length >= 2) {
+                state.playerName = name;
+                state.playerId = 'P-' + Date.now();
+                state.userRole = 'PARTICIPANT';
+                SyncManager.joinPlayer({ id: state.playerId, name: name, score: 0, joinTime: Date.now(), status: 'active' });
+                showScreen('lobby-screen');
+            }
+        }
+
+        // Admin Tabs
+        if (target.classList.contains('tab-btn')) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const panes = document.querySelectorAll('.tab-pane');
+            const indicator = document.querySelector('.tab-indicator');
+
+            tabs.forEach(t => t.classList.remove('active'));
+            panes.forEach(p => p.classList.remove('active'));
+            target.classList.add('active');
+            const pane = getEl(target.dataset.tab);
+            if (pane) pane.classList.add('active');
+
+            if (indicator) {
+                indicator.style.width = target.offsetWidth + 'px';
+                indicator.style.left = target.offsetLeft + 'px';
+            }
+            renderAdminData();
+        }
+
+        // Level Cards
+        if (target.classList.contains('level-card')) {
+            const lvl = parseInt(target.dataset.level);
+            SyncManager.updateGameState({ current_level: lvl });
+        }
+
+        // Battle Commands
+        if (id === 'admin-start') SyncManager.updateGameState({ phase: 'playing', question_index: 0 });
+        if (id === 'admin-show') SyncManager.updateGameState({ phase: 'show_answer' });
+        if (id === 'admin-stop') SyncManager.updateGameState({ phase: 'lobby' });
+        if (id === 'admin-next') {
+            const next = state.global.questionIndex + 1;
+            if (next < getCurrentPool().length) SyncManager.updateGameState({ question_index: next, phase: 'playing' });
+            else SyncManager.updateGameState({ phase: 'results' });
+        }
+        if (id === 'admin-reset') {
+            if (confirm("PURGE SESSION DATA?")) SyncManager.resetGame();
+        }
+        if (id === 'add-player-btn') {
+            const nameIn = getEl('manual-player-name');
+            if (nameIn && nameIn.value.trim()) {
+                SyncManager.joinPlayer({ id: 'M-' + Date.now(), name: nameIn.value.trim(), score: 0, joinTime: Date.now(), status: 'active' });
+                nameIn.value = '';
+            }
         }
     });
-
-    // Battle
-    safeBind('start-battle', () => {
-        const name = getEl('player-name').value.trim();
-        if (name.length < 2) return;
-        state.playerName = name;
-        state.playerId = 'P-' + Date.now();
-        state.userRole = 'PARTICIPANT';
-        SyncManager.joinPlayer({
-            id: state.playerId, name: name, score: 0, joinTime: Date.now(), status: 'active'
-        });
-        showScreen('lobby-screen');
-    });
-
-    // Admin Panel
-    safeBind('admin-start', () => SyncManager.updateGameState({ phase: 'playing', question_index: 0 }));
-    safeBind('admin-show', () => SyncManager.updateGameState({ phase: 'show_answer' }));
-    safeBind('admin-stop', () => SyncManager.updateGameState({ phase: 'lobby' }));
-    safeBind('admin-reset', () => { if (confirm("RESET ARENA?")) SyncManager.resetGame(); });
-    safeBind('admin-next', () => {
-        const next = state.global.questionIndex + 1;
-        if (next < getCurrentPool().length) SyncManager.updateGameState({ question_index: next, phase: 'playing' });
-        else SyncManager.updateGameState({ phase: 'results' });
-    });
-    safeBind('add-player-btn', () => {
-        const name = getEl('manual-player-name').value.trim();
-        if (name) SyncManager.joinPlayer({ id: 'M-' + Date.now(), name: name, score: 0, joinTime: Date.now(), status: 'active' });
-    });
 }
 
-function initAdminTerminal() {
-    const tabs = document.querySelectorAll('.tab-btn');
-    const indicator = document.querySelector('.tab-indicator');
-
-    tabs.forEach(tab => {
-        tab.onclick = () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            tab.classList.add('active');
-            getEl(tab.dataset.tab).classList.add('active');
-            if (indicator) {
-                indicator.style.width = tab.offsetWidth + 'px';
-                indicator.style.left = tab.offsetLeft + 'px';
-            }
-        };
-    });
-
-    document.querySelectorAll('.level-card').forEach(card => {
-        card.onclick = () => {
-            SyncManager.updateGameState({ current_level: parseInt(card.dataset.level) });
-        };
-    });
-}
-
-// 7. Initialize
+// 7. Initialization
 function initArena() {
+    if (window.ARENA_INITIALIZED) return;
+    window.ARENA_INITIALIZED = true;
+
     ArenaLog.info("ARENA BOOT SEQUENCE START...");
 
-    // FX
+    // Particles
     const ptn = getEl('particles-container');
     if (ptn) {
         ptn.innerHTML = '';
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 20; i++) {
             const p = document.createElement('div');
-            Object.assign(p.style, { position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%', width: '2px', height: '2px', background: '#00f2ff' });
+            Object.assign(p.style, { position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%', width: '2px', height: '2px', background: '#00f2ff', boxShadow: '0 0 5px #00f2ff' });
             ptn.appendChild(p);
         }
     }
 
-    bindEvents();
+    initNavigation();
     if (supabase) SyncManager.subscribe();
 
+    // Fade Out Loader
     setTimeout(() => {
         const loader = getEl('loading-screen');
+        const app = getEl('app');
+        if (app) app.style.display = 'block';
         if (loader) {
             loader.classList.add('fade-out');
             setTimeout(() => {
                 loader.style.display = 'none';
-                getEl('app').style.display = 'block';
                 showScreen('home-screen');
             }, 800);
+        } else {
+            showScreen('home-screen');
         }
     }, 2000);
 }
 
+// Bulletproof Startup
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initArena();
+} else {
+    window.addEventListener('DOMContentLoaded', initArena);
+}
+
+// Final Emergency Fallback (Force reveal after 4s)
+setTimeout(() => {
+    const loader = getEl('loading-screen');
+    if (loader && loader.style.display !== 'none') {
+        ArenaLog.warn("EMERGENCY REVEAL TRIGGERED");
+        initArena();
+        loader.style.display = 'none';
+        const app = getEl('app');
+        if (app) app.style.display = 'block';
+        showScreen('home-screen');
+    }
+}, 4000);
+
 window.SyncManager = SyncManager;
-window.addEventListener('DOMContentLoaded', initArena);
+window.state = state;
