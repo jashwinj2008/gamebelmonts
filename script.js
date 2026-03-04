@@ -365,13 +365,43 @@ setTimeout(() => {
     ensureAppVisible();
 }, 5000);
 
+// Force the app to display the home screen and log every step
+function forceAppDisplay() {
+    ArenaLog.info("DEBUG: Attempting to force app display.");
+
+    const loader = document.getElementById('loading-screen');
+    const app = document.getElementById('app');
+
+    if (loader) {
+        loader.classList.remove('active');
+        loader.style.display = 'none';
+        ArenaLog.info("DEBUG: Loading screen hidden.");
+    } else {
+        ArenaLog.err("DEBUG: Loading screen element not found.");
+    }
+
+    if (app) {
+        app.style.display = 'flex';
+        ArenaLog.info("DEBUG: App screen displayed.");
+        showScreen('home-screen');
+    } else {
+        ArenaLog.err("DEBUG: App element not found.");
+    }
+}
+
+// Automatically force the app display after a timeout
+setTimeout(() => {
+    ArenaLog.info("DEBUG: Timeout reached, forcing app display.");
+    forceAppDisplay();
+}, 5000);
+
 // Ensure the Force Override button works
 const forceButton = document.getElementById('force-enter-btn');
 if (forceButton) {
     forceButton.style.display = 'block'; // Ensure the button is visible
     forceButton.addEventListener('click', () => {
         ArenaLog.info("DEBUG: Force Override button clicked.");
-        ensureAppVisible();
+        forceAppDisplay();
     });
 } else {
     ArenaLog.warn("DEBUG: Force Override button not found.");
