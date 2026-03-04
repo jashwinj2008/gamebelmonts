@@ -263,10 +263,8 @@ function initArena() {
         const app = getEl('app');
         if (app) app.style.display = 'flex';
         if (loader) {
-            loader.style.transition = 'opacity 0.8s ease';
-            loader.style.opacity = '0';
-            loader.style.pointerEvents = 'none';
             setTimeout(() => {
+                loader.classList.remove('active');
                 loader.style.display = 'none';
                 showScreen('home-screen');
             }, 800);
