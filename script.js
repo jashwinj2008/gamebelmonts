@@ -77,7 +77,7 @@ const getEl = (id) => document.getElementById(id);
 
 // 4. UI Engine
 function showScreen(screenId) {
-    ArenaLog.info("SWITCHING SCREEN READY -> " + screenId);
+    ArenaLog.info("DEBUG: Switching to screen -> " + screenId);
     const screens = document.querySelectorAll('.screen');
     screens.forEach(s => {
         s.classList.remove('active');
@@ -91,8 +91,9 @@ function showScreen(screenId) {
         setTimeout(() => target.style.opacity = '1', 10);
         state.currentScreen = screenId;
         updateUI();
+        ArenaLog.info("DEBUG: Screen switched to -> " + screenId);
     } else {
-        ArenaLog.err("SCREEN MISSING: " + screenId);
+        ArenaLog.err("DEBUG: Screen element not found -> " + screenId);
     }
 }
 
@@ -297,3 +298,41 @@ setTimeout(() => {
 window.SyncManager = SyncManager;
 window.state = state;
 window.showScreen = showScreen;
+
+// Add debugging logs to identify issues
+ArenaLog.info("DEBUG: Script loaded and initialized.");
+
+// Enhance forceRevealArena function
+function forceRevealArena() {
+    ArenaLog.info("DEBUG: forceRevealArena triggered.");
+    var loader = document.getElementById('loading-screen');
+    if (loader) {
+        loader.classList.remove('active');
+        loader.style.display = 'none';
+        ArenaLog.info("DEBUG: Loading screen hidden.");
+    } else {
+        ArenaLog.warn("DEBUG: Loading screen element not found.");
+    }
+
+    var app = document.getElementById('app');
+    if (app) {
+        app.style.display = 'flex';
+        ArenaLog.info("DEBUG: App screen displayed.");
+    } else {
+        ArenaLog.warn("DEBUG: App element not found.");
+    }
+
+    if (typeof showScreen === 'function') {
+        showScreen('home-screen');
+        ArenaLog.info("DEBUG: showScreen('home-screen') called.");
+    } else {
+        ArenaLog.err("DEBUG: showScreen function not defined.");
+    }
+}
+
+// Add a check for Supabase initialization
+if (!supabase) {
+    ArenaLog.err("DEBUG: Supabase instance not initialized.");
+} else {
+    ArenaLog.info("DEBUG: Supabase instance initialized successfully.");
+}
