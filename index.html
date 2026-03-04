@@ -10,7 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.1">
 </head>
 
 <body>
@@ -39,7 +39,19 @@
         setTimeout(function () {
             var btn = document.getElementById('force-enter-btn');
             if (btn) btn.style.display = 'block';
-        }, 5000);
+        }, 3000);
+        function forceRevealArena() {
+            var loader = document.getElementById('loading-screen');
+            if (loader) {
+                loader.classList.remove('active');
+                loader.style.display = 'none';
+            }
+            var app = document.getElementById('app');
+            if (app) {
+                app.style.display = 'flex';
+            }
+            if (typeof showScreen === 'function') showScreen('home-screen');
+        }
     </script>
     <!-- Background & FX -->
     <div id="bg-container">
@@ -47,7 +59,6 @@
         <div class="grid-floor"></div>
     </div>
     <div id="particles-container"></div>
-
     <main id="app">
         <!-- Home Screen -->
         <section id="home-screen" class="screen">
@@ -72,7 +83,6 @@
                             <p>Join the Fight</p>
                         </div>
                     </div>
-
                     <div id="player-input-group" class="input-group hidden">
                         <p class="input-label">"ENTER YOUR PIRATE NAME"</p>
                         <input type="text" id="player-name" placeholder="CODENAME" maxlength="20">
@@ -81,7 +91,6 @@
                         <button id="back-to-roles" class="text-link">GO BACK</button>
                     </div>
                 </div>
-
                 <aside class="rules-panel glass">
                     <h3 class="rules-title"><span class="neon-text-blue">BATTLE</span> <span
                             class="neon-text-purple">PROTOCOL</span></h3>
@@ -101,7 +110,6 @@
                 </aside>
             </div>
         </section>
-
         <!-- Admin Login Screen -->
         <section id="admin-login-screen" class="screen">
             <div class="hero">
@@ -114,7 +122,6 @@
                 </div>
             </div>
         </section>
-
         <!-- Admin Panel Screen -->
         <section id="admin-panel-screen" class="screen">
             <div class="admin-wrapper">
@@ -135,7 +142,6 @@
                         <button id="admin-logout" class="sidebar-btn danger-text">🚪 Logout</button>
                     </div>
                 </aside>
-
                 <div class="admin-main">
                     <!-- 2. Dashboard Section -->
                     <div id="tab-dashboard" class="tab-pane active">
@@ -167,7 +173,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- 3. Players Management -->
                     <div id="tab-players" class="tab-pane">
                         <h2 class="admin-title">Player Management</h2>
@@ -372,7 +377,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=2.1.0"></script>
+    <script src="script.js?v=2.1"></script>
 </body>
 
 </html>

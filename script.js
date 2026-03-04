@@ -250,8 +250,8 @@ function initNavigation() {
 
 // 6. Initialization Sequence (Bulletproof)
 function initArena() {
-    if (window.ARENA_STOP) return;
-    window.ARENA_STOP = true;
+    if (window.ARENA_INITIALIZED) return;
+    window.ARENA_INITIALIZED = true;
     ArenaLog.info("BOOT SEQUENCE INITIATED");
 
     initNavigation();
