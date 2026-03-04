@@ -109,7 +109,7 @@ function showScreen(screenId) {
 
 function updateUI() {
     try {
-        if (state.currentScreen === 'admin-panel-screen') renderAdminData();
+        // Removed admin panel logic
         if (state.userRole === 'PARTICIPANT' || state.playerId) syncParticipantScreen();
     } catch (e) {
         ArenaLog.err("UI UPDATE FAIL: " + e.message);
@@ -141,51 +141,7 @@ const SyncManager = {
     }
 };
 
-function renderAdminData() {
-    const s = getEl('stat-game-status');
-    const l = getEl('stat-current-level');
-    const tp = getEl('stat-total-players');
-    const hs = getEl('stat-highest-score');
-
-    if (s) {
-        s.innerText = state.global.phase.toUpperCase();
-        s.className = 'stat-value ' + state.global.phase;
-    }
-    if (l) l.innerText = state.global.currentLevel;
-    if (tp) tp.innerText = state.global.players.length;
-
-    let maxSc = 0;
-    if (state.global.players.length > 0) {
-        maxSc = Math.max(...state.global.players.map(p => p.score));
-    }
-    if (hs) hs.innerText = maxSc;
-
-    document.querySelectorAll('.level-card').forEach(c => {
-        if (parseInt(c.dataset.level) === state.global.currentLevel) c.classList.add('selected');
-        else c.classList.remove('selected');
-    });
-
-    const list = getEl('admin-player-list');
-    if (list) {
-        list.innerHTML = '';
-        state.global.players.filter(p => p.status === 'active').forEach((p, i) => {
-            const row = document.createElement('tr');
-            row.innerHTML = '<td>' + p.name + '</td><td>' + p.score + '</td><td>' + state.global.currentLevel + '</td><td>Playing</td><td><button class="neon-button small red outline" onclick="SyncManager.kickPlayer(\'' + p.id + '\')">Remove</button></td>';
-            list.appendChild(row);
-        });
-    }
-
-    const liveBoard = getEl('live-leaderboard-list');
-    if (liveBoard) {
-        liveBoard.innerHTML = '';
-        const sorted = [...state.global.players].sort((a, b) => b.score - a.score);
-        sorted.forEach((p, i) => {
-            const row = document.createElement('tr');
-            row.innerHTML = '<td>' + p.name + '</td><td>' + p.score + '</td><td>' + Math.floor(p.score / 100) + '</td><td>--</td>';
-            liveBoard.appendChild(row);
-        });
-    }
-}
+// Removed renderAdminData and related admin panel logic
 
 function syncParticipantScreen() {
     const g = state.global;
@@ -217,10 +173,7 @@ function initNavigation() {
         const id = target.id;
         ArenaLog.info("CLICK DETECTED ON: " + (id || target.className || target.tagName));
 
-        if (id === 'role-admin' || target.closest('#role-admin')) {
-            ArenaLog.info("ADMIN ROLE SELECTED");
-            showScreen('admin-login-screen');
-        }
+        // Removed admin role selection logic
         if (id === 'role-participant' || target.closest('#role-participant')) {
             ArenaLog.info("PARTICIPANT ROLE SELECTED");
             var roleSelection = getEl('role-selection');
@@ -234,17 +187,7 @@ function initNavigation() {
             if (playerInput2) playerInput2.classList.add('hidden');
             if (roleSelection2) roleSelection2.classList.remove('hidden');
         }
-        if (id === 'cancel-admin') showScreen('home-screen');
-        if (id === 'login-btn') {
-            const p = getEl('admin-password');
-            if (p && (p.value.toLowerCase() === 'straw hats' || p.value === '9500')) { 
-                state.userRole = 'ADMIN'; 
-                showScreen('admin-panel-screen'); 
-            } else if (p) { 
-                p.classList.add('wrong-auth'); 
-                setTimeout(function() { p.classList.remove('wrong-auth'); }, 500); 
-            }
-        }
+        // Removed admin login logic
         if (id === 'start-battle') {
             const nameInput = getEl('player-name');
             const n = nameInput ? nameInput.value.trim() : '';
@@ -260,34 +203,7 @@ function initNavigation() {
         if (id === 'force-enter-btn') {
             forceRevealArena();
         }
-        // Tabs
-        if (target.classList.contains('sidebar-btn') && !target.classList.contains('danger-text')) {
-            document.querySelectorAll('.sidebar-btn').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            target.classList.add('active');
-            const pane = getEl(target.dataset.tab);
-            if (pane) pane.classList.add('active');
-            renderAdminData();
-        }
-        // Levels
-        if (target.classList.contains('level-card')) {
-            SyncManager.updateGameState({ current_level: parseInt(target.dataset.level) });
-        }
-        // Admin Commands
-        if (id === 'ctrl-start') SyncManager.updateGameState({ phase: 'playing', question_index: 0 });
-        if (id === 'ctrl-pause') SyncManager.updateGameState({ phase: 'paused' });
-        if (id === 'ctrl-restart') SyncManager.updateGameState({ phase: 'playing', question_index: state.global.questionIndex });
-        if (id === 'ctrl-skip' || id === 'admin-next') {
-            const next = state.global.questionIndex + 1;
-            if (next < questionsBank[state.global.currentLevel].length) SyncManager.updateGameState({ question_index: next, phase: 'playing' });
-            else SyncManager.updateGameState({ phase: 'results' });
-        }
-        if (id === 'ctrl-end') {
-            if (confirm("Are you sure you want to end the game?")) {
-                SyncManager.updateGameState({ phase: 'lobby' });
-            }
-        }
-        if (id === 'admin-logout') showScreen('home-screen');
+        // Removed admin panel tab, level, and command logic
         if (id === 'play-again') showScreen('home-screen');
     });
 }
