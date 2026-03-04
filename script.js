@@ -11,7 +11,7 @@ window.onerror = function (msg, url, line) {
     ArenaLog.err(`Global Crash: ${msg} [Line: ${line}]`);
 };
 
-ArenaLog.info("SYSTEM SECURE: INITIALIZING KERNEL...");
+ArenaLog.info("SYSTEM SECURE: INITIALIZING KERNEL V2.0.1...");
 
 // 2. Supabase - Defensive Initialization
 let supabase = null;

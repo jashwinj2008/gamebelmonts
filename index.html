@@ -26,11 +26,22 @@
                 <div class="loading-bar-fill"></div>
             </div>
             <p class="loading-text">DECRYPTING ARENA ACCESS...</p>
+            <button id="force-enter-btn" class="neon-button small"
+                style="margin-top:2rem; display:none; font-size: 0.8rem; padding: 0.5rem 1rem;"
+                onclick="document.getElementById('loading-screen').style.display='none'; document.getElementById('app').style.display='block';">FORCE
+                OVERRIDE</button>
         </div>
         <div class="welcome-container terror-frame">
             <h2 class="welcome-text">WELCOME TO CODE ARENA</h2>
         </div>
     </div>
+    <!-- Script that shows the force button if it takes too long -->
+    <script>
+        setTimeout(function () {
+            var btn = document.getElementById('force-enter-btn');
+            if (btn) btn.style.display = 'block';
+        }, 5000);
+    </script>
     <!-- Background & FX -->
     <div id="bg-container">
         <div class="gradient-bg"></div>
@@ -241,7 +252,25 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=2.0.1"></script>
+    <!-- GLOBAL EMERGENCY REVEAL -->
+    <script>
+        setTimeout(function () {
+            var loader = document.getElementById('loading-screen');
+            if (loader && (window.getComputedStyle(loader).display !== 'none')) {
+                console.warn("Global Emergency Reveal: Forcing UI entry...");
+                loader.style.display = 'none';
+                var app = document.getElementById('app');
+                if (app) app.style.display = 'block';
+                // Try to find if script.js home screen function exists
+                if (window.showScreen) window.showScreen('home-screen');
+                else {
+                    var home = document.getElementById('home-screen');
+                    if (home) { home.classList.add('active'); home.style.display = 'flex'; }
+                }
+            }
+        }, 6000);
+    </script>
 </body>
 
 </html>
