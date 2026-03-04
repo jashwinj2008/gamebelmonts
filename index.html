@@ -87,12 +87,6 @@
                             <h3>PARTICIPANT</h3>
                             <p>Join the Fight</p>
                         </div>
-                        <div class="role-card glass training" id="role-training"
-                            onclick="window.location.href='basic-computer-game.html'">
-                            <span class="role-icon">🎓</span>
-                            <h3>TRAINING</h3>
-                            <p>Master the Basics</p>
-                        </div>
                     </div>
                     <div id="player-input-group" class="input-group hidden">
                         <p class="input-label">"ENTER YOUR PIRATE NAME"</p>
@@ -152,22 +146,26 @@
                         <div class="level-grid">
                             <div class="level-card glass" data-level="1">
                                 <span class="lvl-num">LV 1</span>
-                                <h4>Binary Challenge</h4>
+                                <h4>Basics Arena</h4>
                             </div>
                             <div class="level-card glass" data-level="2">
                                 <span class="lvl-num">LV 2</span>
-                                <h4>Hardware Builder</h4>
+                                <h4>Binary Challenge</h4>
                             </div>
                             <div class="level-card glass" data-level="3">
                                 <span class="lvl-num">LV 3</span>
-                                <h4>Stack & Queue Battle</h4>
+                                <h4>Hardware Builder</h4>
                             </div>
                             <div class="level-card glass" data-level="4">
                                 <span class="lvl-num">LV 4</span>
-                                <h4>Network Defender</h4>
+                                <h4>Stack & Queue Battle</h4>
                             </div>
                             <div class="level-card glass" data-level="5">
                                 <span class="lvl-num">LV 5</span>
+                                <h4>Network Defender</h4>
+                            </div>
+                            <div class="level-card glass" data-level="6">
+                                <span class="lvl-num">LV 6</span>
                                 <h4>Tech Escape Room</h4>
                             </div>
                         </div>
@@ -180,11 +178,12 @@
                             <div class="form-group">
                                 <label>Assign Level</label>
                                 <select id="q-level" class="admin-input">
-                                    <option value="1">Level 1 - Binary Challenge</option>
-                                    <option value="2">Level 2 - Hardware Builder</option>
-                                    <option value="3">Level 3 - Stack & Queue Battle</option>
-                                    <option value="4">Level 4 - Network Defender</option>
-                                    <option value="5">Level 5 - Tech Escape Room</option>
+                                    <option value="1">Level 1 - Basics Arena</option>
+                                    <option value="2">Level 2 - Binary Challenge</option>
+                                    <option value="3">Level 3 - Hardware Builder</option>
+                                    <option value="4">Level 4 - Stack & Queue Battle</option>
+                                    <option value="5">Level 5 - Network Defender</option>
+                                    <option value="6">Level 6 - Tech Escape Room</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -239,7 +238,7 @@
                             </div>
                             <div class="setting-item">
                                 <label>Total Levels</label>
-                                <input type="number" class="admin-input" value="5">
+                                <input type="number" id="total-levels-input" class="admin-input" value="6">
                             </div>
                             <div class="setting-item">
                                 <label>Points per Correct Answer</label>

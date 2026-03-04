@@ -48,35 +48,43 @@ const state = {
 };
 
 const levels = [
-    { id: 1, name: "Binary Challenge", color: "#00f2ff" },
-    { id: 2, name: "Hardware Builder", color: "#bc13fe" },
-    { id: 3, name: "Stack & Queue Battle", color: "#39ff14" },
-    { id: 4, name: "Network Defender", color: "#ff003c" },
-    { id: 5, name: "Tech Escape Room", color: "#ffd700" }
+    { id: 1, name: "Basics Arena", color: "#00f2ff" },
+    { id: 2, name: "Binary Challenge", color: "#bc13fe" },
+    { id: 3, name: "Hardware Builder", color: "#39ff14" },
+    { id: 4, name: "Stack & Queue Battle", color: "#ff003c" },
+    { id: 5, name: "Network Defender", color: "#ffd700" },
+    { id: 6, name: "Tech Escape Room", color: "#ff8c00" }
 ];
 
 const questionsBank = {
     1: [
+        { q: "What is the physical part of a computer called?", a: ["Software", "Hardware", "Operating System", "Network"], correct: 1 },
+        { q: "Which of these is the main 'brain' that processes all data?", a: ["Monitor", "Mouse", "CPU", "Keyboard"], correct: 2 },
+        { q: "What does RAM stand for?", a: ["Read Access Memory", "Random Access Memory", "Remote Area Mode", "Remote Application Monitor"], correct: 1 },
+        { q: "Which device is used to highlight items on the screen (pointing device)?", a: ["Printer", "Scanner", "Mouse", "Speaker"], correct: 2 },
+        { q: "Which software manages all other programs on a computer?", a: ["Word", "Chrome", "Operating System", "Photoshop"], correct: 2 }
+    ],
+    2: [
         { q: "What is the decimal value of the binary number 1010?", a: ["8", "10", "12", "14"], correct: 1 },
         { q: "Which of these is a bitwise operator in JavaScript?", a: ["&&", "||", "&", "!"], correct: 2 },
         { q: "How many bits are in 1 byte?", a: ["4", "8", "16", "32"], correct: 1 }
     ],
-    2: [
+    3: [
         { q: "Which component is known as the 'brain' of the computer?", a: ["RAM", "GPU", "CPU", "SSD"], correct: 2 },
         { q: "What type of memory is volatile and lost when power is off?", a: ["ROM", "RAM", "HDD", "FLASH"], correct: 1 },
         { q: "Which port is commonly used for high-definition video and audio?", a: ["VGA", "USB-A", "HDMI", "PS/2"], correct: 2 }
     ],
-    3: [
+    4: [
         { q: "Which data structure follows the FIFO (First In First Out) principle?", a: ["Stack", "Queue", "Tree", "Graph"], correct: 1 },
         { q: "What is the operation to add an element to a Stack?", a: ["Pop", "Push", "Enqueue", "Dequeue"], correct: 1 },
         { q: "In a Queue, where does 'Dequeue' happen?", a: ["Front", "Back", "Middle", "Random"], correct: 0 }
     ],
-    4: [
+    5: [
         { q: "Which port is the default for HTTPS traffic?", a: ["80", "21", "25", "443"], correct: 3 },
         { q: "What does DNS stand for?", a: ["Data Network System", "Domain Name System", "Digital Node Service", "Direct Net Signal"], correct: 1 },
         { q: "Which layer of the OSI model handles routing?", a: ["Physical", "Data Link", "Network", "Transport"], correct: 2 }
     ],
-    5: [
+    6: [
         { q: "What is the time complexity of a Binary Search algorithm?", a: ["O(n)", "O(n^2)", "O(log n)", "O(1)"], correct: 2 },
         { q: "Which keyword is used to create a constant variable in ES6?", a: ["var", "let", "const", "static"], correct: 2 },
         { q: "What is the result of typeof null in JavaScript?", a: ["'null'", "'undefined'", "'object'", "'number'"], correct: 2 }
@@ -154,7 +162,7 @@ function forceRevealArena() {
     ArenaLog.info("Force reveal triggered");
     const loader = getEl('loading-screen');
     const app = getEl('app');
-    
+
     if (loader) {
         loader.classList.remove('active');
         loader.style.display = 'none';
@@ -192,8 +200,8 @@ function initNavigation() {
             const nameInput = getEl('player-name');
             const n = nameInput ? nameInput.value.trim() : '';
             if (n.length >= 2) {
-                state.playerName = n; 
-                state.playerId = 'P-' + Date.now(); 
+                state.playerName = n;
+                state.playerId = 'P-' + Date.now();
                 state.userRole = 'PARTICIPANT';
                 SyncManager.joinPlayer({ id: state.playerId, name: n, score: 0, joinTime: Date.now(), status: 'active' });
                 showScreen('lobby-screen');
@@ -216,20 +224,20 @@ function initArena() {
 
     // Initialize click handlers
     initNavigation();
-    
+
     // Hide loading screen and show app after short delay (MUST be before subscribe)
-    setTimeout(function() {
+    setTimeout(function () {
         ArenaLog.info("FINISHING STARTUP...");
         const loader = getEl('loading-screen');
         const app = getEl('app');
-        
+
         if (app) app.style.display = 'flex';
-        
+
         if (loader) {
             loader.classList.remove('active');
             loader.style.display = 'none';
         }
-        
+
         showScreen('home-screen');
         ArenaLog.info("ARENA READY");
     }, 4000);
@@ -246,7 +254,7 @@ function initArena() {
 }
 
 // Start when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     ArenaLog.info("DOM Content Loaded");
     initArena();
 });
@@ -258,7 +266,7 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 }
 
 // Safety net: Force show after 6 seconds no matter what
-setTimeout(function() {
+setTimeout(function () {
     const loader = getEl('loading-screen');
     if (loader && (loader.style.display !== 'none')) {
         ArenaLog.warn("SAFETY NET TRIGGERED - Forcing app display");
