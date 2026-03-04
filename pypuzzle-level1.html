@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyPuzzle – Level 1</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #0a0e17;
+      color: #e0e0e0;
+      font-family: 'Share Tech Mono', monospace;
+      margin: 0;
+      min-height: 100vh;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    .grid-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, #101622 0 1px, transparent 1px 32px),
+                  repeating-linear-gradient(90deg, #101622 0 1px, transparent 1px 32px);
+      opacity: 0.25;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 2rem 2rem 1rem 2rem;
+      z-index: 2;
+      position: relative;
+    }
+    .game-title {
+      font-size: 2.2rem;
+      color: #00d4ff;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px #00d4ff88;
+    }
+    .level-badge {
+      background: #00ff88;
+      color: #0a0e17;
+      font-weight: bold;
+      border-radius: 8px;
+      padding: 0.3em 1em;
+      font-size: 1.1rem;
+      box-shadow: 0 0 8px #00ff8888;
+      letter-spacing: 1px;
+    }
+    .mission-panel {
+      background: #101622;
+      border-left: 4px solid #00d4ff;
+      margin: 0 2rem 1.5rem 2rem;
+      padding: 1.2rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      color: #b8ffe0;
+      box-shadow: 0 0 12px #00d4ff22;
+      z-index: 2;
+      position: relative;
+    }
+    .layout {
+      display: flex;
+      flex-direction: row;
+      gap: 2.5rem;
+      justify-content: center;
+      align-items: flex-start;
+      margin: 0 2rem;
+      z-index: 2;
+      position: relative;
+    }
+    .piece-bank, .solution-zone {
+      background: #131b2a;
+      border-radius: 10px;
+      padding: 1.2rem 1rem;
+      min-width: 270px;
+      min-height: 320px;
+      box-shadow: 0 0 16px #00d4ff22;
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      border: 2px solid #101622;
+      transition: border-color 0.2s;
+    }
+    .piece-bank {
+      border-left: 4px solid #00d4ff;
+    }
+    .solution-zone {
+      border-right: 4px solid #00ff88;
+      min-height: 320px;
+      min-width: 320px;
+      align-items: stretch;
+    }
+    .zone-title {
+      color: #00d4ff;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 1px;
+      text-shadow: 0 0 6px #00d4ff44;
+    }
+    .solution-zone .zone-title {
+      color: #00ff88;
+      text-shadow: 0 0 6px #00ff8844;
+    }
+    .code-piece {
+      background: #181f2e;
+      border-radius: 7px;
+      padding: 0.7em 1em;
+      font-size: 1.08rem;
+      color: #fff;
+      cursor: grab;
+      border: 2px solid #222b3a;
+      box-shadow: 0 0 8px #00d4ff22;
+      margin-bottom: 0.1em;
+      user-select: none;
+      transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+      min-height: 2.2em;
+      position: relative;
+      z-index: 1;
+    }
+    .code-piece.dragging {
+      opacity: 0.5;
+      box-shadow: 0 0 16px #00d4ff88;
+    }
+    .code-piece.correct {
+      border-color: #00ff88;
+      box-shadow: 0 0 12px #00ff8888;
+      background: #14291a;
+      color: #00ff88;
+    }
+    .code-piece.incorrect {
+      animation: shake 0.4s;
+      border-color: #ff003c;
+      background: #2a1818;
+      color: #ff003c;
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+      100% { transform: translateX(0); }
+    }
+    .line-number {
+      color: #00d4ff;
+      font-size: 1em;
+      margin-right: 0.7em;
+      opacity: 0.7;
+      min-width: 1.5em;
+      text-align: right;
+      user-select: none;
+    }
+    .button-row {
+      display: flex;
+      gap: 1.2rem;
+      justify-content: center;
+      margin: 2.5rem 0 0.5rem 0;
+      z-index: 2;
+      position: relative;
+    }
+    .game-btn {
+      background: linear-gradient(90deg, #00d4ff 60%, #00ff88 100%);
+      color: #0a0e17;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7em 2.2em;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 0 12px #00d4ff44;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .game-btn:active {
+      background: linear-gradient(90deg, #00ff88 60%, #00d4ff 100%);
+      color: #0a0e17;
+      box-shadow: 0 0 16px #00ff8888;
+    }
+    .output-panel {
+      background: #101622;
+      border-radius: 8px;
+      margin: 2rem auto 0 auto;
+      padding: 1.2rem 2rem;
+      max-width: 600px;
+      color: #00ff88;
+      font-size: 1.15rem;
+      box-shadow: 0 0 16px #00ff8822;
+      border: 2px solid #00ff88;
+      text-align: left;
+      white-space: pre-line;
+      z-index: 2;
+      position: relative;
+      display: none;
+    }
+    .output-panel.visible {
+      display: block;
+      animation: fadeIn 0.5s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .success-msg {
+      color: #00ff88;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 0.5em;
+      text-shadow: 0 0 8px #00ff8844;
+    }
+    .hint-msg {
+      color: #ff003c;
+      font-size: 1.05rem;
+      margin-top: 0.7em;
+      text-shadow: 0 0 8px #ff003c44;
+    }
+    /* Syntax Highlighting */
+    .kw { color: #00d4ff; }
+    .str { color: #00ff88; }
+    .num { color: #ffd700; }
+    .func { color: #ffb300; }
+    .var { color: #ffb300; }
+    .paren { color: #fff; }
+    .op { color: #ff003c; }
+    .comment { color: #888; font-style: italic; }
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; gap: 1.5rem; }
+      .piece-bank, .solution-zone { min-width: unset; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="header">
+    <span class="game-title">PyPuzzle</span>
+    <span class="level-badge">Level 1</span>
+  </div>
+  <div class="mission-panel">
+    Arrange the shuffled Python code lines in the correct order to produce the expected output. Drag pieces from the Piece Bank to the Solution Zone. Click <b>Check Answer</b> to see if you’re right!
+  </div>
+  <div class="layout">
+    <div class="piece-bank" id="piece-bank">
+      <div class="zone-title">Piece Bank</div>
+      <!-- Pieces go here -->
+    </div>
+    <div class="solution-zone" id="solution-zone">
+      <div class="zone-title">Solution Zone</div>
+      <!-- Solution pieces go here -->
+    </div>
+  </div>
+  <div class="button-row">
+    <button class="game-btn" id="reset-btn">Reset</button>
+    <button class="game-btn" id="check-btn">Check Answer</button>
+  </div>
+  <div class="output-panel" id="output-panel">
+    <div class="success-msg">Correct! Output:</div>
+    <div class="output-text" id="output-text"></div>
+  </div>
+  <div class="hint-msg" id="hint-msg" style="display:none;"></div>
+  <script>
+    // --- Game Data ---
+    const CODE_LINES = [
+      'name = "Python"',
+      'version = 3',
+      'print("Welcome to", name)',
+      'print("You are using version", version)'
+    ];
+    const CORRECT_ORDER = [0, 1, 2, 3];
+    const EXPECTED_OUTPUT = [
+      'Welcome to Python',
+      'You are using version 3'
+    ];
+    // --- Syntax Highlighting ---
+    function highlight(line) {
+      return line
+        .replace(/(print|version|name)/g, '<span class="var">$1</span>')
+        .replace(/(=)/g, '<span class="op">$1</span>')
+        .replace(/(\d+)/g, '<span class="num">$1</span>')
+        .replace(/("[^"]*"|\'[^"]*\')/g, '<span class="str">$1</span>')
+        .replace(/(print)(?=\s*\()/g, '<span class="kw">$1</span>')
+        ;
+    }
+    // --- State ---
+    let pieceOrder = [];
+    let bank, zone, outputPanel, outputText, hintMsg;
+    // --- Utility ---
+    function shuffle(arr) {
+      let a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    // --- Render Functions ---
+    function renderBank() {
+      bank.innerHTML = '<div class="zone-title">Piece Bank</div>';
+      pieceOrder.forEach(idx => {
+        if (!inSolution(idx)) {
+          const el = createPiece(idx);
+          bank.appendChild(el);
+        }
+      });
+    }
+    function renderZone() {
+      zone.innerHTML = '<div class="zone-title">Solution Zone</div>';
+      getSolution().forEach((idx, i) => {
+        const el = createPiece(idx, i + 1);
+        zone.appendChild(el);
+      });
+    }
+    function createPiece(idx, lineNum) {
+      const div = document.createElement('div');
+      div.className = 'code-piece';
+      div.setAttribute('draggable', 'true');
+      div.dataset.idx = idx;
+      div.innerHTML =
+        (lineNum ? `<span class="line-number">${lineNum}</span>` : '') +
+        highlight(CODE_LINES[idx]);
+      // Drag events
+      div.addEventListener('dragstart', dragStart);
+      div.addEventListener('dragend', dragEnd);
+      return div;
+    }
+    function inSolution(idx) {
+      return getSolution().includes(idx);
+    }
+    function getSolution() {
+      // Solution zone pieces are stored in DOM order
+      return Array.from(zone.querySelectorAll('.code-piece')).map(el => +el.dataset.idx);
+    }
+    // --- Drag and Drop ---
+    let dragSrc = null;
+    function dragStart(e) {
+      dragSrc = this;
+      setTimeout(() => this.classList.add('dragging'), 0);
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    function dragEnd() {
+      this.classList.remove('dragging');
+      dragSrc = null;
+    }
+    function handleDropZone(e) {
+      e.preventDefault();
+      if (!dragSrc) return;
+      if (e.target.classList.contains('code-piece')) {
+        // Insert before the hovered piece
+        zone.insertBefore(dragSrc, e.target);
+      } else {
+        // Append to end
+        zone.appendChild(dragSrc);
+      }
+      renderBank();
+    }
+    function handleDropBank(e) {
+      e.preventDefault();
+      if (!dragSrc) return;
+      bank.appendChild(dragSrc);
+      renderZone();
+    }
+    function allowDrop(e) { e.preventDefault(); }
+    // --- Game Logic ---
+    function checkAnswer() {
+      const sol = getSolution();
+      let correct = true;
+      if (sol.length !== CORRECT_ORDER.length) correct = false;
+      else {
+        for (let i = 0; i < CORRECT_ORDER.length; ++i) {
+          if (sol[i] !== CORRECT_ORDER[i]) correct = false;
+        }
+      }
+      if (correct) {
+        showOutput();
+        Array.from(zone.querySelectorAll('.code-piece')).forEach(el => {
+          el.classList.add('correct');
+        });
+        hintMsg.style.display = 'none';
+      } else {
+        // Shake incorrect pieces
+        Array.from(zone.querySelectorAll('.code-piece')).forEach((el, i) => {
+          if (sol[i] !== CORRECT_ORDER[i]) {
+            el.classList.remove('correct');
+            el.classList.add('incorrect');
+            setTimeout(() => el.classList.remove('incorrect'), 500);
+          } else {
+            el.classList.remove('incorrect');
+          }
+        });
+        showHint();
+        outputPanel.classList.remove('visible');
+      }
+    }
+    function showOutput() {
+      outputPanel.classList.add('visible');
+      outputText.innerText = EXPECTED_OUTPUT.join('\n');
+    }
+    function showHint() {
+      hintMsg.innerHTML = 'Hint: Check the order of variable assignments and print statements.';
+      hintMsg.style.display = 'block';
+    }
+    function resetGame() {
+      pieceOrder = shuffle([0, 1, 2, 3]);
+      renderBank();
+      renderZone();
+      outputPanel.classList.remove('visible');
+      hintMsg.style.display = 'none';
+    }
+    // --- Init ---
+    window.addEventListener('DOMContentLoaded', () => {
+      bank = document.getElementById('piece-bank');
+      zone = document.getElementById('solution-zone');
+      outputPanel = document.getElementById('output-panel');
+      outputText = document.getElementById('output-text');
+      hintMsg = document.getElementById('hint-msg');
+      // Drag and drop events
+      zone.addEventListener('dragover', allowDrop);
+      zone.addEventListener('drop', handleDropZone);
+      bank.addEventListener('dragover', allowDrop);
+      bank.addEventListener('drop', handleDropBank);
+      document.getElementById('reset-btn').onclick = resetGame;
+      document.getElementById('check-btn').onclick = checkAnswer;
+      resetGame();
+    });
+  </script>
+</body>
+</html>
