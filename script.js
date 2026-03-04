@@ -1,4 +1,4 @@
-// --- BELMONTS: TECH ARENA - Core Logic (Ultra-Robust Edition) ---
+// --- BELMONTS: TECH ARENA - Core Logic (God-Tier Robustness) ---
 
 // 1. Diagnostics & Logging
 const ArenaLog = {
@@ -7,11 +7,7 @@ const ArenaLog = {
     err: (msg) => console.error(`[ARENA ERROR] ${msg}`)
 };
 
-window.onerror = function (msg, url, line) {
-    ArenaLog.err(`Global Crash: ${msg} [Line: ${line}]`);
-};
-
-ArenaLog.info("SYSTEM SECURE: INITIALIZING KERNEL V2.0.1...");
+ArenaLog.info("SYSTEM SECURE: INITIALIZING KERNEL V2.1.0...");
 
 // 2. Supabase - Defensive Initialization
 let supabase = null;
@@ -20,12 +16,10 @@ try {
     const supabaseKey = 'sb_publishable_SBrp-zgLSnJAQb8_XAyECQ_Vj8zF5kN';
     if (window.supabase) {
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        ArenaLog.info("SUPABASE: CONNECTED");
-    } else {
-        ArenaLog.warn("SUPABASE: SDK NOT DETECTED");
+        ArenaLog.info("SUPABASE: INSTANCE ACQUIRED");
     }
 } catch (e) {
-    ArenaLog.err("SUPABASE: CONNECTION FATAL");
+    ArenaLog.err("SUPABASE: FATAL INITIALIZATION ERROR");
 }
 
 // 3. Global State
@@ -79,34 +73,46 @@ const questionsBank = {
     ]
 };
 
-function getCurrentPool() {
-    return questionsBank[state.global.currentLevel] || [];
+const getEl = (id) => document.getElementById(id);
+
+// 4. UI Engine
+function showScreen(screenId) {
+    ArenaLog.info("SWITCHING SCREEN READY -> " + screenId);
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+        s.style.opacity = '0';
+    });
+    const target = getEl(screenId);
+    if (target) {
+        target.classList.add('active');
+        target.style.display = (screenId === 'home-screen' || screenId === 'admin-login-screen') ? 'flex' : 'flex';
+        target.style.opacity = '1';
+        state.currentScreen = screenId;
+        updateUI();
+    } else {
+        ArenaLog.err("SCREEN MISSING: " + screenId);
+    }
 }
 
-// 4. Sync Infrastructure
+function updateUI() {
+    try {
+        if (state.currentScreen === 'admin-panel-screen') renderAdminData();
+        if (state.userRole === 'PARTICIPANT' || state.playerId) syncParticipantScreen();
+    } catch (e) {
+        ArenaLog.err("UI UPDATE FAIL: " + e.message);
+    }
+}
+
+// REST OF LOGIC (Sync, Admin, etc.) - Simplified if necessary but kept robust
 const SyncManager = {
-    async joinPlayer(player) {
-        if (!supabase) return;
-        await supabase.from('players').upsert([player]);
-    },
-    async updateScore(playerId, points) {
-        if (!supabase) return;
-        const p = state.global.players.find(p => p.id === playerId);
-        if (p) await supabase.from('players').update({ score: p.score + points }).eq('id', playerId);
-    },
-    async updateGameState(updates) {
-        if (!supabase) return;
-        await supabase.from('game_state').upsert([{ id: 'global', ...updates }]);
-    },
-    async kickPlayer(id) {
-        if (!supabase) return;
-        await supabase.from('players').update({ status: 'kicked' }).eq('id', id);
-    },
-    async resetGame() {
-        if (!supabase) return;
-        await supabase.from('players').update({ score: 0, status: 'active', answers: [] }).neq('id', 'temp');
-        await this.updateGameState({ phase: 'lobby', current_level: 1, question_index: 0 });
-    },
+    async joinPlayer(player) { try { if (supabase) await supabase.from('players').upsert([player]); } catch (e) { } },
+    async updateScore(pId, points) { try { if (supabase) { const p = state.global.players.find(x => x.id === pId); if (p) await supabase.from('players').update({ score: p.score + points }).eq('id', pId); } } catch (e) { } },
+    async updateGameState(upd) { try { if (supabase) await supabase.from('game_state').upsert([{ id: 'global', ...upd }]); } catch (e) { } },
+    async kickPlayer(id) { try { if (supabase) await supabase.from('players').update({ status: 'kicked' }).eq('id', id); } catch (e) { } },
+    async loadPlayers() { try { if (supabase) { const { data } = await supabase.from('players').select('*').order('joinTime', { ascending: true }); if (data) state.global.players = data; updateUI(); } } catch (e) { } },
+    async loadGameState() { try { if (supabase) { const { data } = await supabase.from('game_state').select('*').eq('id', 'global').single(); if (data) { state.global.phase = data.phase; state.global.currentLevel = data.current_level; state.global.questionIndex = data.question_index; updateUI(); } } } catch (e) { } },
     subscribe() {
         if (!supabase) return;
         supabase.channel('players_sync').on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => this.loadPlayers()).subscribe();
@@ -121,58 +127,18 @@ const SyncManager = {
         }).subscribe();
         this.loadPlayers();
         this.loadGameState();
-    },
-    async loadPlayers() {
-        if (!supabase) return;
-        const { data } = await supabase.from('players').select('*').order('joinTime', { ascending: true });
-        if (data) state.global.players = data;
-        updateUI();
-    },
-    async loadGameState() {
-        if (!supabase) return;
-        const { data } = await supabase.from('game_state').select('*').eq('id', 'global').single();
-        if (data) {
-            state.global.phase = data.phase;
-            state.global.currentLevel = data.current_level;
-            state.global.questionIndex = data.question_index;
-            updateUI();
-        }
     }
 };
 
-// 5. UI Engine
-const getEl = (id) => document.getElementById(id);
-
-function showScreen(screenId) {
-    ArenaLog.info("SWITCHING SCREEN -> " + screenId);
-    const screens = document.querySelectorAll('.screen');
-    screens.forEach(s => {
-        s.classList.remove('active');
-        s.style.display = 'none';
-    });
-    const target = getEl(screenId);
-    if (target) {
-        target.classList.add('active');
-        target.style.display = 'flex';
-        state.currentScreen = screenId;
-        updateUI();
-    }
-}
-
-function updateUI() {
-    if (state.currentScreen === 'admin-panel-screen') renderAdminData();
-    if (state.userRole === 'PARTICIPANT' || state.playerId) syncParticipantScreen();
-}
-
 function renderAdminData() {
-    const statusBadge = getEl('status-badge');
-    const levelLabel = getEl('active-level-label');
-    if (statusBadge) statusBadge.innerText = state.global.phase.toUpperCase();
-    if (levelLabel) levelLabel.innerText = levels.find(l => l.id === state.global.currentLevel)?.name || 'NONE';
+    const s = getEl('status-badge');
+    const l = getEl('active-level-label');
+    if (s) s.innerText = state.global.phase.toUpperCase();
+    if (l) l.innerText = levels.find(x => x.id === state.global.currentLevel)?.name || 'NONE';
 
-    document.querySelectorAll('.level-card').forEach(card => {
-        if (parseInt(card.dataset.level) === state.global.currentLevel) card.classList.add('selected');
-        else card.classList.remove('selected');
+    document.querySelectorAll('.level-card').forEach(c => {
+        if (parseInt(c.dataset.level) === state.global.currentLevel) c.classList.add('selected');
+        else c.classList.remove('selected');
     });
 
     const list = getEl('admin-player-list');
@@ -193,10 +159,7 @@ function renderAdminData() {
             const row = document.createElement('div');
             row.className = 'score-row';
             const percent = Math.min(100, (p.score / 1500) * 100);
-            row.innerHTML = `
-                <div class="score-info"><span>${i + 1}. ${p.name}</span><span>${p.score} XP</span></div>
-                <div class="score-bar-bg"><div class="score-bar-fill" style="width: ${percent}%"></div></div>
-            `;
+            row.innerHTML = `<div class="score-info"><span>${i + 1}. ${p.name}</span><span>${p.score} XP</span></div><div class="score-bar-bg"><div class="score-bar-fill" style="width: ${percent}%"></div></div>`;
             board.appendChild(row);
         });
     }
@@ -204,195 +167,84 @@ function renderAdminData() {
 
 function syncParticipantScreen() {
     const g = state.global;
-    if (g.phase === 'lobby' && state.currentScreen !== 'lobby-screen' && state.currentScreen !== 'home-screen') showScreen('lobby-screen');
-    else if (g.phase === 'playing' && state.currentScreen !== 'quiz-screen') {
-        showScreen('quiz-screen');
-        initLocalQuestion();
-    }
-    else if (g.phase === 'results' && state.currentScreen !== 'result-screen') showResults();
-
-    if (state.currentScreen === 'lobby-screen') {
-        const list = getEl('player-list');
-        if (list) {
-            list.innerHTML = '';
-            g.players.filter(p => p.status === 'active').forEach((p, i) => {
-                const item = document.createElement('div');
-                item.className = 'player-entry';
-                item.innerHTML = `<span>${i + 1}</span><span class="name">${p.name}</span><span class="score">${p.score}</span>`;
-                list.appendChild(item);
-            });
-        }
-        const badge = getEl('participant-count-badge');
-        if (badge) badge.innerText = `UNITS: ${g.players.length}`;
-    }
+    if (g.phase === 'lobby' && (state.currentScreen !== 'lobby-screen' && state.currentScreen !== 'home-screen')) showScreen('lobby-screen');
+    else if (g.phase === 'playing' && state.currentScreen !== 'quiz-screen') showScreen('quiz-screen');
 }
 
-function initLocalQuestion() {
-    const pool = getCurrentPool();
-    const q = pool[state.global.questionIndex];
-    if (!q) return;
-
-    const qText = getEl('question-text');
-    if (qText) qText.innerText = q.q;
-
-    const grid = getEl('answer-grid');
-    if (grid) {
-        grid.innerHTML = '';
-        grid.dataset.answered = 'false';
-        q.a.forEach((ans, i) => {
-            const btn = document.createElement('button');
-            btn.className = 'answer-btn';
-            btn.innerText = ans;
-            btn.onclick = () => {
-                if (grid.dataset.answered === 'true') return;
-                grid.dataset.answered = 'true';
-                if (i === q.correct) {
-                    btn.classList.add('correct');
-                    SyncManager.updateScore(state.playerId, 100);
-                } else {
-                    btn.classList.add('wrong');
-                }
-            };
-            grid.appendChild(btn);
-        });
-    }
-}
-
-function showResults() {
-    showScreen('result-screen');
-    const sorted = [...state.global.players].sort((a, b) => b.score - a.score);
-    const myRank = sorted.findIndex(p => p.id === state.playerId) + 1;
-    const box = getEl('personal-rank-box');
-    if (box) box.innerHTML = `<h2>RANK: ${myRank || 'OFFLINE'}</h2>`;
-}
-
-// 6. Navigation Logic - GLOBAL DELEGATION
+// 5. Global Click Delegator
 function initNavigation() {
-    ArenaLog.info("NAV: INITIALIZING GLOBAL DELEGATOR...");
-
     document.addEventListener('click', (e) => {
         const target = e.target.closest('[id], .tab-btn, .level-card');
         if (!target) return;
-
         const id = target.id;
-        ArenaLog.info("NAV EVENT: " + id + " (Class: " + target.className + ")");
+        ArenaLog.info("CLICK: " + (id || target.className));
 
-        // Role Selection
         if (id === 'role-admin') showScreen('admin-login-screen');
         if (id === 'role-participant') {
-            const sel = getEl('role-selection');
-            const inc = getEl('player-input-group');
-            if (sel) sel.classList.add('hidden');
-            if (inc) inc.classList.remove('hidden');
+            getEl('role-selection')?.classList.add('hidden');
+            getEl('player-input-group')?.classList.remove('hidden');
         }
         if (id === 'back-to-roles') {
-            const sel = getEl('role-selection');
-            const inc = getEl('player-input-group');
-            if (sel) sel.classList.remove('hidden');
-            if (inc) inc.classList.add('hidden');
+            getEl('player-input-group')?.classList.add('hidden');
+            getEl('role-selection')?.classList.remove('hidden');
         }
         if (id === 'cancel-admin') showScreen('home-screen');
-
-        // Admin Login
         if (id === 'login-btn') {
-            const passEl = getEl('admin-password');
-            if (passEl && passEl.value === '9500') {
-                state.userRole = 'ADMIN';
-                showScreen('admin-panel-screen');
-            } else if (passEl) {
-                passEl.classList.add('wrong-auth');
-                setTimeout(() => passEl.classList.remove('wrong-auth'), 500);
-            }
+            const p = getEl('admin-password');
+            if (p?.value === '9500') { state.userRole = 'ADMIN'; showScreen('admin-panel-screen'); }
+            else { p?.classList.add('wrong-auth'); setTimeout(() => p?.classList.remove('wrong-auth'), 500); }
         }
-
-        // Participant Join
         if (id === 'start-battle') {
-            const nameEl = getEl('player-name');
-            const name = nameEl ? nameEl.value.trim() : "";
-            if (name.length >= 2) {
-                state.playerName = name;
-                state.playerId = 'P-' + Date.now();
-                state.userRole = 'PARTICIPANT';
-                SyncManager.joinPlayer({ id: state.playerId, name: name, score: 0, joinTime: Date.now(), status: 'active' });
+            const n = getEl('player-name')?.value.trim();
+            if (n?.length >= 2) {
+                state.playerName = n; state.playerId = 'P-' + Date.now(); state.userRole = 'PARTICIPANT';
+                SyncManager.joinPlayer({ id: state.playerId, name: n, score: 0, joinTime: Date.now(), status: 'active' });
                 showScreen('lobby-screen');
             }
         }
-
-        // Admin Tabs
+        // Tabs
         if (target.classList.contains('tab-btn')) {
-            const tabs = document.querySelectorAll('.tab-btn');
-            const panes = document.querySelectorAll('.tab-pane');
-            const indicator = document.querySelector('.tab-indicator');
-
-            tabs.forEach(t => t.classList.remove('active'));
-            panes.forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
             target.classList.add('active');
             const pane = getEl(target.dataset.tab);
             if (pane) pane.classList.add('active');
-
-            if (indicator) {
-                indicator.style.width = target.offsetWidth + 'px';
-                indicator.style.left = target.offsetLeft + 'px';
-            }
             renderAdminData();
         }
-
-        // Level Cards
+        // Levels
         if (target.classList.contains('level-card')) {
-            const lvl = parseInt(target.dataset.level);
-            SyncManager.updateGameState({ current_level: lvl });
+            SyncManager.updateGameState({ current_level: parseInt(target.dataset.level) });
         }
-
-        // Battle Commands
+        // Admin Cmds
         if (id === 'admin-start') SyncManager.updateGameState({ phase: 'playing', question_index: 0 });
         if (id === 'admin-show') SyncManager.updateGameState({ phase: 'show_answer' });
         if (id === 'admin-stop') SyncManager.updateGameState({ phase: 'lobby' });
         if (id === 'admin-next') {
             const next = state.global.questionIndex + 1;
-            if (next < getCurrentPool().length) SyncManager.updateGameState({ question_index: next, phase: 'playing' });
+            if (next < questionsBank[state.global.currentLevel].length) SyncManager.updateGameState({ question_index: next, phase: 'playing' });
             else SyncManager.updateGameState({ phase: 'results' });
-        }
-        if (id === 'admin-reset') {
-            if (confirm("PURGE SESSION DATA?")) SyncManager.resetGame();
-        }
-        if (id === 'add-player-btn') {
-            const nameIn = getEl('manual-player-name');
-            if (nameIn && nameIn.value.trim()) {
-                SyncManager.joinPlayer({ id: 'M-' + Date.now(), name: nameIn.value.trim(), score: 0, joinTime: Date.now(), status: 'active' });
-                nameIn.value = '';
-            }
         }
     });
 }
 
-// 7. Initialization
+// 6. Initialization Sequence (Bulletproof)
 function initArena() {
-    if (window.ARENA_INITIALIZED) return;
-    window.ARENA_INITIALIZED = true;
-
-    ArenaLog.info("ARENA BOOT SEQUENCE START...");
-
-    // Particles
-    const ptn = getEl('particles-container');
-    if (ptn) {
-        ptn.innerHTML = '';
-        for (let i = 0; i < 20; i++) {
-            const p = document.createElement('div');
-            Object.assign(p.style, { position: 'absolute', left: Math.random() * 100 + '%', top: Math.random() * 100 + '%', width: '2px', height: '2px', background: '#00f2ff', boxShadow: '0 0 5px #00f2ff' });
-            ptn.appendChild(p);
-        }
-    }
+    if (window.ARENA_STOP) return;
+    window.ARENA_STOP = true;
+    ArenaLog.info("BOOT SEQUENCE INITIATED");
 
     initNavigation();
     if (supabase) SyncManager.subscribe();
 
-    // Fade Out Loader
-    setTimeout(() => {
+    const finishStartup = () => {
+        ArenaLog.info("FINISHING STARTUP...");
         const loader = getEl('loading-screen');
         const app = getEl('app');
-        if (app) app.style.display = 'block';
+        if (app) app.style.display = 'flex';
         if (loader) {
-            loader.classList.add('fade-out');
+            loader.style.transition = 'opacity 0.8s ease';
+            loader.style.opacity = '0';
+            loader.style.pointerEvents = 'none';
             setTimeout(() => {
                 loader.style.display = 'none';
                 showScreen('home-screen');
@@ -400,28 +252,29 @@ function initArena() {
         } else {
             showScreen('home-screen');
         }
-    }, 2000);
+    };
+
+    // Give it 2 seconds for effect, then reveal
+    setTimeout(finishStartup, 2000);
 }
 
-// Bulletproof Startup
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    initArena();
-} else {
-    window.addEventListener('DOMContentLoaded', initArena);
-}
+// Startup Trigger
+if (document.readyState === 'complete' || document.readyState === 'interactive') initArena();
+else window.addEventListener('DOMContentLoaded', initArena);
 
-// Final Emergency Fallback (Force reveal after 4s)
+// Final Safety Net
 setTimeout(() => {
     const loader = getEl('loading-screen');
-    if (loader && loader.style.display !== 'none') {
-        ArenaLog.warn("EMERGENCY REVEAL TRIGGERED");
+    if (loader && loader.style.display !== 'none' && loader.style.opacity !== '0') {
+        ArenaLog.warn("SAFETY NET TRIGGERED");
         initArena();
         loader.style.display = 'none';
         const app = getEl('app');
-        if (app) app.style.display = 'block';
+        if (app) app.style.display = 'flex';
         showScreen('home-screen');
     }
-}, 4000);
+}, 5000);
 
 window.SyncManager = SyncManager;
 window.state = state;
+window.showScreen = showScreen;

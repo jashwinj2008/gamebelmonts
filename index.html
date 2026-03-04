@@ -28,8 +28,7 @@
             <p class="loading-text">DECRYPTING ARENA ACCESS...</p>
             <button id="force-enter-btn" class="neon-button small"
                 style="margin-top:2rem; display:none; font-size: 0.8rem; padding: 0.5rem 1rem;"
-                onclick="document.getElementById('loading-screen').style.display='none'; document.getElementById('app').style.display='block';">FORCE
-                OVERRIDE</button>
+                onclick="forceRevealArena()">FORCE OVERRIDE</button>
         </div>
         <div class="welcome-container terror-frame">
             <h2 class="welcome-text">WELCOME TO CODE ARENA</h2>
@@ -252,22 +251,25 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=2.0.1"></script>
+    <script src="script.js?v=2.1.0"></script>
     <!-- GLOBAL EMERGENCY REVEAL -->
     <script>
+        function forceRevealArena() {
+            var loader = document.getElementById('loading-screen');
+            var app = document.getElementById('app');
+            console.warn("Global Emergency Reveal: Forcing UI entry...");
+            if (loader) loader.style.display = 'none';
+            if (app) app.style.display = 'flex';
+            if (window.showScreen) window.showScreen('home-screen');
+            else {
+                var home = document.getElementById('home-screen');
+                if (home) { home.classList.add('active'); home.style.display = 'flex'; home.style.opacity = '1'; }
+            }
+        }
         setTimeout(function () {
             var loader = document.getElementById('loading-screen');
-            if (loader && (window.getComputedStyle(loader).display !== 'none')) {
-                console.warn("Global Emergency Reveal: Forcing UI entry...");
-                loader.style.display = 'none';
-                var app = document.getElementById('app');
-                if (app) app.style.display = 'block';
-                // Try to find if script.js home screen function exists
-                if (window.showScreen) window.showScreen('home-screen');
-                else {
-                    var home = document.getElementById('home-screen');
-                    if (home) { home.classList.add('active'); home.style.display = 'flex'; }
-                }
+            if (loader && (window.getComputedStyle(loader).display !== 'none' || loader.style.opacity !== '0')) {
+                forceRevealArena();
             }
         }, 6000);
     </script>
