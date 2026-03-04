@@ -1081,3 +1081,146 @@ input:focus {
         grid-template-columns: 1fr;
     }
 }
+
+/* --- HOME SCREEN LAYOUT --- */
+.home-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+    width: 95%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.hero {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* --- RULES PANEL --- */
+.rules-panel {
+    flex: 0.8;
+    padding: 30px;
+    position: relative;
+    background: rgba(10, 10, 20, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.1), 0 0 30px rgba(0, 0, 0, 0.5);
+    text-align: left;
+    max-width: 450px;
+    border-radius: 15px;
+}
+
+.rules-panel::before {
+    content: 'SECURE_CHANNEL://ARENA_RULES';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--neon-blue);
+    color: #000;
+    font-size: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    padding: 2px 8px;
+    letter-spacing: 1px;
+}
+
+.rules-title {
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 10px;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.rules-list {
+    list-style: none;
+    padding: 0;
+}
+
+.rules-list li {
+    margin-bottom: 18px;
+    padding-left: 0;
+    position: relative;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #ccc;
+}
+
+.step-num {
+    color: var(--neon-blue);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    margin-right: 15px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.rules-list li strong {
+    color: #fff;
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+}
+
+.rules-footer {
+    margin-top: 30px;
+    font-size: 0.8rem;
+    color: var(--neon-blue);
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.7;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #39ff14;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #39ff14;
+    animation: flash_pulse 1s infinite alternate;
+}
+
+@keyframes flash_pulse {
+    from {
+        opacity: 0.3;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* UI Utilities */
+.neon-text-blue {
+    color: var(--neon-blue);
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+}
+
+.neon-text-purple {
+    color: var(--neon-purple);
+    text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1100px) {
+    .home-container {
+        flex-direction: column;
+        gap: 40px;
+    }
+
+    .rules-panel {
+        max-width: 90%;
+        margin-top: 20px;
+    }
+}
