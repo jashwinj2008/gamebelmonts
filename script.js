@@ -336,3 +336,35 @@ if (!supabase) {
 } else {
     ArenaLog.info("DEBUG: Supabase instance initialized successfully.");
 }
+
+// Ensure the loading screen is hidden after a timeout
+setTimeout(() => {
+    const loader = document.getElementById('loading-screen');
+    if (loader) {
+        loader.classList.remove('active');
+        loader.style.display = 'none';
+        ArenaLog.info("DEBUG: Loading screen automatically hidden after timeout.");
+    } else {
+        ArenaLog.warn("DEBUG: Loading screen element not found during auto-hide.");
+    }
+
+    const app = document.getElementById('app');
+    if (app) {
+        app.style.display = 'flex';
+        ArenaLog.info("DEBUG: App screen displayed after timeout.");
+        showScreen('home-screen');
+    } else {
+        ArenaLog.warn("DEBUG: App element not found during auto-display.");
+    }
+}, 5000); // Adjust timeout as needed
+
+// Add event listener to ensure forceRevealArena works
+const forceButton = document.getElementById('force-enter-btn');
+if (forceButton) {
+    forceButton.addEventListener('click', () => {
+        ArenaLog.info("DEBUG: Force Override button clicked.");
+        forceRevealArena();
+    });
+} else {
+    ArenaLog.warn("DEBUG: Force Override button not found.");
+}
