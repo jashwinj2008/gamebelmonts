@@ -127,12 +127,11 @@
                 </div>
             </div>
         </section>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- 4. Game Control Panel -->
+        <!-- Admin Dashboard Screen (Hidden by default) -->
+        <section id="admin-panel-screen" class="screen">
+            <div class="admin-wrapper glass">
+                <div class="admin-main">
+                    <!-- Game Control Panel -->
                     <div id="tab-game" class="tab-pane">
                         <h2 class="admin-title">Game Control Panel</h2>
                         <div class="game-controls glass">
@@ -168,7 +167,7 @@
                         </div>
                     </div>
 
-                    <!-- 5. Question Control -->
+                    <!-- Question Control -->
                     <div id="tab-questions" class="tab-pane">
                         <h2 class="admin-title">Question Control</h2>
                         <div class="questions-panel glass">
@@ -204,7 +203,7 @@
                         </div>
                     </div>
 
-                    <!-- 6. Live Leaderboard -->
+                    <!-- Live Leaderboard -->
                     <div id="tab-leaderboard" class="tab-pane">
                         <h2 class="admin-title">Live Leaderboard</h2>
                         <div class="table-container glass">
@@ -224,7 +223,7 @@
                         </div>
                     </div>
 
-                    <!-- 7. Settings Section -->
+                    <!-- Settings Section -->
                     <div id="tab-settings" class="tab-pane">
                         <h2 class="admin-title">Game Settings</h2>
                         <div class="settings-grid glass">
@@ -256,7 +255,6 @@
                                 Settings</button>
                         </div>
                     </div>
-
                 </div>
             </div>
         </section>
@@ -310,7 +308,9 @@
         </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer onerror="console.warn('Supabase CDN failed to load')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer
+        onerror="console.warn('Supabase CDN failed to load')"></script>
     <script src="script.js?v=2.3" defer></script>
 </body>
+
 </html>
