@@ -37,34 +37,54 @@
     <main id="app">
         <!-- Home Screen -->
         <section id="home-screen" class="screen">
-            <div class="hero">
-                <div class="terror-frame banner">
-                    <img src="https://i.postimg.cc/43fPDHcJ/Whats-App-Image-2026-03-01-at-9-27-13-PM.jpg"
-                        alt="Arena Badge" class="home-banner-img">
-                </div>
-                <h1 class="glitch-title" data-text="BELMONTS">BELMONTS</h1>
-                <p class="subtitle">Enter the Tech War Arena</p>
-
-                <div id="role-selection" class="role-selection">
-                    <div class="role-card glass admin" id="role-admin">
-                        <span class="role-icon">⚡</span>
-                        <h3>ADMIN</h3>
-                        <p>Control the Battle</p>
+            <div class="home-container">
+                <div class="hero">
+                    <div class="terror-frame banner">
+                        <img src="https://i.postimg.cc/43fPDHcJ/Whats-App-Image-2026-03-01-at-9-27-13-PM.jpg"
+                            alt="Arena Badge" class="home-banner-img">
                     </div>
-                    <div class="role-card glass participant" id="role-participant">
-                        <span class="role-icon">⚔️</span>
-                        <h3>PARTICIPANT</h3>
-                        <p>Join the Fight</p>
+                    <h1 class="glitch-title" data-text="BELMONTS">BELMONTS</h1>
+                    <p class="subtitle">Enter the Tech War Arena</p>
+
+                    <div id="role-selection" class="role-selection">
+                        <div class="role-card glass admin" id="role-admin">
+                            <span class="role-icon">⚡</span>
+                            <h3>ADMIN</h3>
+                            <p>Control the Battle</p>
+                        </div>
+                        <div class="role-card glass participant" id="role-participant">
+                            <span class="role-icon">⚔️</span>
+                            <h3>PARTICIPANT</h3>
+                            <p>Join the Fight</p>
+                        </div>
+                    </div>
+
+                    <div id="player-input-group" class="input-group hidden">
+                        <p class="input-label">"ENTER YOUR PIRATE NAME"</p>
+                        <input type="text" id="player-name" placeholder="CODENAME" maxlength="20">
+                        <span id="name-error" class="error-msg hidden">NAME ALREADY TAKEN BY ANOTHER PIRATE</span>
+                        <button id="start-battle" class="neon-button">INITIALIZE COMBAT</button>
+                        <button id="back-to-roles" class="text-link">GO BACK</button>
                     </div>
                 </div>
 
-                <div id="player-input-group" class="input-group hidden">
-                    <p class="input-label">"ENTER YOUR PIRATE NAME"</p>
-                    <input type="text" id="player-name" placeholder="CODENAME" maxlength="20">
-                    <span id="name-error" class="error-msg hidden">NAME ALREADY TAKEN BY ANOTHER PIRATE</span>
-                    <button id="start-battle" class="neon-button">INITIALIZE COMBAT</button>
-                    <button id="back-to-roles" class="text-link">GO BACK</button>
-                </div>
+                <aside class="rules-panel glass">
+                    <h3 class="rules-title"><span class="neon-text-blue">BATTLE</span> <span
+                            class="neon-text-purple">PROTOCOL</span></h3>
+                    <ul class="rules-list">
+                        <li><span class="step-num">01</span> <strong>SYNC FIRST:</strong> Ensure your codename is unique
+                            to enter the arena.</li>
+                        <li><span class="step-num">02</span> <strong>5 CHALLENGE LEVELS:</strong> From Binary math to
+                            Software architecture.</li>
+                        <li><span class="step-num">03</span> <strong>TIME SENSITIVE:</strong> Faster answers yield
+                            higher sync scores.</li>
+                        <li><span class="step-num">04</span> <strong>ADMIN VETO:</strong> Kicked units lose all arena
+                            access instantly.</li>
+                        <li><span class="step-num">05</span> <strong>TOP 8 GLORY:</strong> Only the elite appear on live
+                            battle rankings.</li>
+                    </ul>
+                    <div class="rules-footer">STATUS: <span class="pulse-dot"></span> BROADCASTING LIVE</div>
+                </aside>
             </div>
         </section>
 
