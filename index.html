@@ -61,12 +61,16 @@
                     <p class="subtitle">Enter the Tech War Arena</p>
 
                     <div id="role-selection" class="role-selection">
-                        <div class="role-card glass admin" id="role-admin">
+                        <div class="role-card glass admin" id="role-admin"
+                            onclick="console.log('INLINE ADMIN CLICK'); alert('ADMIN CLICKED!');"
+                            style="position: relative; z-index: 9999;">
                             <span class="role-icon">⚡</span>
                             <h3>ADMIN</h3>
                             <p>Control the Battle</p>
                         </div>
-                        <div class="role-card glass participant" id="role-participant">
+                        <div class="role-card glass participant" id="role-participant"
+                            onclick="console.log('INLINE PARTICIPANT CLICK'); alert('PARTICIPANT CLICKED!');"
+                            style="position: relative; z-index: 9999;">
                             <span class="role-icon">⚔️</span>
                             <h3>PARTICIPANT</h3>
                             <p>Join the Fight</p>
