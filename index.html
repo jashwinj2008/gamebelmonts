@@ -242,26 +242,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
-    <!-- EMERGENCY RESCUE SCRIPT -->
-    <script>
-        setTimeout(function () {
-            var load = document.getElementById('loading-screen');
-            if (load && (window.getComputedStyle(load).display !== 'none')) {
-                console.log("Emergency Rescue: Forcing reveal of Arena...");
-                load.classList.add('fade-out');
-                setTimeout(function () {
-                    load.style.display = 'none';
-                    var home = document.getElementById('home-screen');
-                    if (home) {
-                        home.classList.add('active');
-                        home.style.display = 'flex';
-                    }
-                    var app = document.getElementById('app');
-                    if (app) app.style.display = 'block';
-                }, 1000);
-            }
-        }, 5000);
-    </script>
 </body>
 
 </html>
