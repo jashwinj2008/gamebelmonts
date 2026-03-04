@@ -131,10 +131,23 @@ const SyncManager = {
 };
 
 function renderAdminData() {
-    const s = getEl('status-badge');
-    const l = getEl('active-level-label');
-    if (s) s.innerText = state.global.phase.toUpperCase();
-    if (l) l.innerText = levels.find(x => x.id === state.global.currentLevel)?.name || 'NONE';
+    const s = getEl('stat-game-status');
+    const l = getEl('stat-current-level');
+    const tp = getEl('stat-total-players');
+    const hs = getEl('stat-highest-score');
+
+    if (s) {
+        s.innerText = state.global.phase.toUpperCase();
+        s.className = `stat-value ${state.global.phase}`;
+    }
+    if (l) l.innerText = state.global.currentLevel;
+    if (tp) tp.innerText = state.global.players.length;
+
+    let maxSc = 0;
+    if (state.global.players.length > 0) {
+        maxSc = Math.max(...state.global.players.map(p => p.score));
+    }
+    if (hs) hs.innerText = maxSc;
 
     document.querySelectorAll('.level-card').forEach(c => {
         if (parseInt(c.dataset.level) === state.global.currentLevel) c.classList.add('selected');
@@ -146,21 +159,19 @@ function renderAdminData() {
         list.innerHTML = '';
         state.global.players.filter(p => p.status === 'active').forEach((p, i) => {
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${i + 1}</td><td>${p.name}</td><td>${p.score}</td><td><button class="text-link red" onclick="SyncManager.kickPlayer('${p.id}')">KICK</button></td>`;
+            row.innerHTML = `<td>${p.name}</td><td>${p.score}</td><td>${state.global.currentLevel}</td><td>Playing</td><td><button class="neon-button small red outline" onclick="SyncManager.kickPlayer('${p.id}')">Remove</button></td>`;
             list.appendChild(row);
         });
     }
 
-    const board = getEl('admin-leaderboard');
-    if (board) {
-        board.innerHTML = '';
+    const liveBoard = getEl('live-leaderboard-list');
+    if (liveBoard) {
+        liveBoard.innerHTML = '';
         const sorted = [...state.global.players].sort((a, b) => b.score - a.score);
         sorted.forEach((p, i) => {
-            const row = document.createElement('div');
-            row.className = 'score-row';
-            const percent = Math.min(100, (p.score / 1500) * 100);
-            row.innerHTML = `<div class="score-info"><span>${i + 1}. ${p.name}</span><span>${p.score} XP</span></div><div class="score-bar-bg"><div class="score-bar-fill" style="width: ${percent}%"></div></div>`;
-            board.appendChild(row);
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${p.name}</td><td>${p.score}</td><td>${Math.floor(p.score / 100)}</td><td>--</td>`;
+            liveBoard.appendChild(row);
         });
     }
 }
@@ -174,7 +185,7 @@ function syncParticipantScreen() {
 // 5. Global Click Delegator
 function initNavigation() {
     document.addEventListener('click', (e) => {
-        const target = e.target.closest('[id], .tab-btn, .level-card');
+        const target = e.target.closest('[id], .sidebar-btn, .tab-btn, .level-card');
         if (!target) return;
         const id = target.id;
         ArenaLog.info("CLICK DETECTED ON: " + (id || target.className || target.tagName));
@@ -207,8 +218,8 @@ function initNavigation() {
             }
         }
         // Tabs
-        if (target.classList.contains('tab-btn')) {
-            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        if (target.classList.contains('sidebar-btn') && !target.classList.contains('danger-text')) {
+            document.querySelectorAll('.sidebar-btn').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
             target.classList.add('active');
             const pane = getEl(target.dataset.tab);
@@ -220,14 +231,20 @@ function initNavigation() {
             SyncManager.updateGameState({ current_level: parseInt(target.dataset.level) });
         }
         // Admin Cmds
-        if (id === 'admin-start') SyncManager.updateGameState({ phase: 'playing', question_index: 0 });
-        if (id === 'admin-show') SyncManager.updateGameState({ phase: 'show_answer' });
-        if (id === 'admin-stop') SyncManager.updateGameState({ phase: 'lobby' });
-        if (id === 'admin-next') {
+        if (id === 'ctrl-start') SyncManager.updateGameState({ phase: 'playing', question_index: 0 });
+        if (id === 'ctrl-pause') SyncManager.updateGameState({ phase: 'paused' });
+        if (id === 'ctrl-restart') SyncManager.updateGameState({ phase: 'playing', question_index: state.global.questionIndex });
+        if (id === 'ctrl-skip' || id === 'admin-next') {
             const next = state.global.questionIndex + 1;
             if (next < questionsBank[state.global.currentLevel].length) SyncManager.updateGameState({ question_index: next, phase: 'playing' });
             else SyncManager.updateGameState({ phase: 'results' });
         }
+        if (id === 'ctrl-end') {
+            if (confirm("Are you sure you want to end the game?")) {
+                SyncManager.updateGameState({ phase: 'lobby' });
+            }
+        }
+        if (id === 'admin-logout') showScreen('home-screen');
     });
 }
 
