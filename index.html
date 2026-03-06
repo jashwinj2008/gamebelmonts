@@ -1136,6 +1136,120 @@
                 <button id="play-again" class="neon-button pulse">RE-REBOOT</button>
             </div>
         </section>
+
+        <!-- Level 1 Screen -->
+        <section id="screen-level-one" class="screen">
+            <!-- Top Bar -->
+            <div class="level-topbar">
+                <div class="level-badge">
+                    <span class="lv-num">LV.1</span>
+                    <span class="lv-name">SORTING: PYTHON</span>
+                </div>
+                <div class="level-timer-wrap">
+                    <div id="level-timer" class="level-timer">00:00</div>
+                    <div id="window-label" class="window-label early">EARLY</div>
+                </div>
+                <div class="level-player-info">
+                    <span id="level-score">0 PTS</span>
+                    <span id="level-codename">AGENT</span>
+                </div>
+            </div>
+
+            <!-- Window Progress Bar -->
+            <div class="window-progress-bar">
+                <div id="seg-early" class="progress-segment early active">
+                    <div class="seg-fill"></div>
+                </div>
+                <div id="seg-mid" class="progress-segment mid">
+                    <div class="seg-fill"></div>
+                </div>
+                <div id="seg-late" class="progress-segment late">
+                    <div class="seg-fill"></div>
+                </div>
+            </div>
+
+            <!-- Puzzle Question -->
+            <div class="puzzle-question-box">
+                <h3 class="puzzle-title">SORT AND ANALYZE A NUMBER LIST</h3>
+                <p class="puzzle-desc">
+                    You are given a list of exam scores. Write a Python program that sorts the scores
+                    in ascending order, finds the lowest and highest score, calculates the average, 
+                    and prints all three results.<br><br>
+                    <code>Input: scores = [72, 45, 88, 60, 95, 33, 78, 55]</code>
+                </p>
+            </div>
+
+            <!-- Main Puzzle Area -->
+            <div class="puzzle-container">
+                <!-- Left Column: Piece Bank -->
+                <div class="puzzle-column piece-bank-column">
+                    <div class="column-label">DRAG PIECES FROM HERE</div>
+                    <div id="piece-bank" class="piece-bank">
+                        <!-- Pieces will be dynamically inserted -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Solution Area -->
+                <div class="puzzle-column solution-column">
+                    <div class="column-label">ARRANGE YOUR SOLUTION HERE</div>
+                    <div id="solution-area" class="solution-area">
+                        <div class="solution-slot" data-slot="1"><span class="slot-num">1</span></div>
+                        <div class="solution-slot" data-slot="2"><span class="slot-num">2</span></div>
+                        <div class="solution-slot" data-slot="3"><span class="slot-num">3</span></div>
+                        <div class="solution-slot" data-slot="4"><span class="slot-num">4</span></div>
+                        <div class="solution-slot" data-slot="5"><span class="slot-num">5</span></div>
+                        <div class="solution-slot" data-slot="6"><span class="slot-num">6</span></div>
+                        <div class="solution-slot" data-slot="7"><span class="slot-num">7</span></div>
+                        <div class="solution-slot" data-slot="8"><span class="slot-num">8</span></div>
+                        <div class="solution-slot" data-slot="9"><span class="slot-num">9</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="puzzle-actions">
+                <button id="btn-run-code" class="action-btn run-btn">▶ RUN CODE</button>
+                <button id="btn-clear-code" class="action-btn clear-btn">✖ CLEAR</button>
+            </div>
+
+            <!-- Success Popup -->
+            <div id="success-popup" class="terminal-popup success-popup" style="display:none;">
+                <div class="popup-header success">CODE EXECUTED SUCCESSFULLY</div>
+                <div class="popup-body">
+                    <div class="output-label">OUTPUT:</div>
+                    <div id="output-result" class="output-result">33 95 65.75</div>
+                    <div id="window-result" class="window-result early">EARLY</div>
+                    <table class="points-table">
+                        <tr><td>Base Points</td><td id="pts-base">100</td></tr>
+                        <tr><td>Time Bonus</td><td id="pts-bonus">+50</td></tr>
+                        <tr><td>Penalty</td><td id="pts-penalty">-0</td></tr>
+                        <tr class="total-row"><td>TOTAL</td><td id="pts-total">150</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Error Popup -->
+            <div id="error-popup" class="terminal-popup error-popup" style="display:none;">
+                <div class="popup-header error">RUNTIME ERROR</div>
+                <div class="popup-body">
+                    <pre class="traceback">Traceback (most recent call last):
+  File "solution.py", line X, in module
+TypeError: unexpected result — check your logic</pre>
+                    <div class="error-hint">REARRANGE AND TRY AGAIN</div>
+                    <div class="penalty-notice">-10 POINTS</div>
+                </div>
+            </div>
+
+            <!-- Level Complete Overlay -->
+            <div id="level-complete-overlay" class="level-complete-overlay" style="display:none;">
+                <div class="complete-content">
+                    <div class="complete-icon">🏆</div>
+                    <h2>LEVEL 1 COMPLETE</h2>
+                    <div id="final-score" class="final-score">0 POINTS</div>
+                    <p>Waiting for other players...</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer

@@ -403,3 +403,595 @@ document.addEventListener('DOMContentLoaded', () => {
         showScreen('home-screen');
     }, 2000); // Reduced delay for faster dev feedback
 });
+
+// ============ LEVEL 1 LOGIC ============
+
+const Level1 = {
+    // Puzzle configuration
+    totalTime: 480, // 8 minutes in seconds
+    windows: {
+        early: { start: 0, end: 160 },
+        mid: { start: 161, end: 320 },
+        late: { start: 321, end: 480 }
+    },
+    
+    // Correct solution order (line IDs)
+    correctOrder: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    
+    // Code pieces data
+    pieces: [
+        { id: 1, code: 'scores = [72, 45, 88, 60, 95, 33, 78, 55]', indent: 0 },
+        { id: 2, code: 'scores.sort()', indent: 0 },
+        { id: 3, code: 'lowest = scores[0]', indent: 0 },
+        { id: 4, code: 'highest = scores[-1]', indent: 0 },
+        { id: 5, code: 'total = 0', indent: 0 },
+        { id: 6, code: 'for score in scores:', indent: 0 },
+        { id: 7, code: '    total = total + score', indent: 1 },
+        { id: 8, code: 'average = total / len(scores)', indent: 0 },
+        { id: 9, code: 'print(lowest, highest, average)', indent: 0 }
+    ],
+    
+    expectedOutput: '33 95 65.75',
+    
+    // Runtime state
+    timerInterval: null,
+    elapsedSeconds: 0,
+    playerScore: 0,
+    playerName: 'AGENT',
+    attempts: 0,
+    solutionOrder: [], // IDs of pieces in solution slots
+    isCompleted: false,
+    
+    // Initialize Level 1
+    init() {
+        this.resetState();
+        this.loadPlayerInfo();
+        this.renderPiecesInBank();
+        this.setupDragAndDrop();
+        this.bindEvents();
+        this.startTimer();
+    },
+    
+    resetState() {
+        this.elapsedSeconds = 0;
+        this.attempts = 0;
+        this.solutionOrder = [null, null, null, null, null, null, null, null, null];
+        this.isCompleted = false;
+        
+        // Clear solution slots
+        const slots = document.querySelectorAll('.solution-slot');
+        slots.forEach(slot => {
+            slot.innerHTML = `<span class="slot-num">${slot.dataset.slot}</span>`;
+            slot.classList.remove('filled');
+        });
+        
+        // Hide popups
+        document.getElementById('success-popup').style.display = 'none';
+        document.getElementById('error-popup').style.display = 'none';
+        document.getElementById('level-complete-overlay').style.display = 'none';
+    },
+    
+    loadPlayerInfo() {
+        // Get player info from localStorage or Supabase
+        const players = Storage.getPlayers();
+        // For demo, use first player or default
+        if (players.length > 0) {
+            this.playerName = players[0].name || 'AGENT';
+            this.playerScore = players[0].score || 0;
+        }
+        
+        document.getElementById('level-codename').textContent = this.playerName;
+        document.getElementById('level-score').textContent = `${this.playerScore} PTS`;
+    },
+    
+    // Shuffle array using Fisher-Yates algorithm
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    },
+    
+    renderPiecesInBank() {
+        const bank = document.getElementById('piece-bank');
+        bank.innerHTML = '';
+        
+        const shuffledPieces = this.shuffleArray(this.pieces);
+        
+        shuffledPieces.forEach(piece => {
+            const el = this.createPieceElement(piece);
+            bank.appendChild(el);
+        });
+    },
+    
+    createPieceElement(piece) {
+        const el = document.createElement('div');
+        el.className = 'code-piece';
+        el.dataset.pieceId = piece.id;
+        el.draggable = true;
+        el.innerHTML = `
+            <span class="drag-handle">⋮⋮</span>
+            <span class="code-text">${piece.code}</span>
+        `;
+        return el;
+    },
+    
+    setupDragAndDrop() {
+        // Desktop drag events
+        document.addEventListener('dragstart', (e) => this.handleDragStart(e));
+        document.addEventListener('dragend', (e) => this.handleDragEnd(e));
+        document.addEventListener('dragover', (e) => this.handleDragOver(e));
+        document.addEventListener('drop', (e) => this.handleDrop(e));
+        document.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        
+        // Touch events for mobile
+        this.setupTouchDrag();
+    },
+    
+    setupTouchDrag() {
+        let draggedElement = null;
+        let touchClone = null;
+        let startSlot = null;
+        
+        document.addEventListener('touchstart', (e) => {
+            const piece = e.target.closest('.code-piece');
+            if (!piece) return;
+            
+            draggedElement = piece;
+            startSlot = piece.closest('.solution-slot');
+            
+            // Create a clone for visual feedback
+            touchClone = piece.cloneNode(true);
+            touchClone.style.position = 'fixed';
+            touchClone.style.pointerEvents = 'none';
+            touchClone.style.zIndex = '9999';
+            touchClone.style.opacity = '0.8';
+            touchClone.style.width = piece.offsetWidth + 'px';
+            document.body.appendChild(touchClone);
+            
+            piece.classList.add('dragging');
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (!draggedElement || !touchClone) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            touchClone.style.left = touch.clientX - 50 + 'px';
+            touchClone.style.top = touch.clientY - 25 + 'px';
+            
+            // Highlight nearest slot
+            const slots = document.querySelectorAll('.solution-slot');
+            slots.forEach(slot => slot.classList.remove('highlight'));
+            
+            const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+            const slot = elementUnder?.closest('.solution-slot');
+            if (slot) slot.classList.add('highlight');
+            
+        }, { passive: false });
+        
+        document.addEventListener('touchend', (e) => {
+            if (!draggedElement) return;
+            
+            const touch = e.changedTouches[0];
+            const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            // Check if dropped on solution slot
+            const targetSlot = elementUnder?.closest('.solution-slot');
+            const bank = elementUnder?.closest('.piece-bank');
+            
+            if (targetSlot) {
+                this.placePieceInSlot(draggedElement, targetSlot, startSlot);
+            } else if (bank) {
+                this.returnPieceToBank(draggedElement, startSlot);
+            }
+            
+            // Cleanup
+            draggedElement.classList.remove('dragging');
+            if (touchClone) touchClone.remove();
+            document.querySelectorAll('.solution-slot').forEach(s => s.classList.remove('highlight'));
+            
+            draggedElement = null;
+            touchClone = null;
+            startSlot = null;
+        });
+    },
+    
+    handleDragStart(e) {
+        const piece = e.target.closest('.code-piece');
+        if (!piece) return;
+        
+        piece.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', piece.dataset.pieceId);
+        e.dataTransfer.setData('fromSlot', piece.closest('.solution-slot')?.dataset.slot || '');
+    },
+    
+    handleDragEnd(e) {
+        const piece = e.target.closest('.code-piece');
+        if (piece) piece.classList.remove('dragging');
+        
+        document.querySelectorAll('.solution-slot').forEach(s => s.classList.remove('highlight'));
+        document.querySelector('.solution-area')?.classList.remove('drag-over');
+    },
+    
+    handleDragOver(e) {
+        e.preventDefault();
+        
+        const slot = e.target.closest('.solution-slot');
+        const solutionArea = e.target.closest('.solution-area');
+        
+        if (slot) {
+            document.querySelectorAll('.solution-slot').forEach(s => s.classList.remove('highlight'));
+            slot.classList.add('highlight');
+        }
+        
+        if (solutionArea) {
+            solutionArea.classList.add('drag-over');
+        }
+    },
+    
+    handleDragLeave(e) {
+        const slot = e.target.closest('.solution-slot');
+        if (slot) slot.classList.remove('highlight');
+        
+        const solutionArea = e.target.closest('.solution-area');
+        if (solutionArea && !solutionArea.contains(e.relatedTarget)) {
+            solutionArea.classList.remove('drag-over');
+        }
+    },
+    
+    handleDrop(e) {
+        e.preventDefault();
+        
+        const pieceId = e.dataTransfer.getData('text/plain');
+        const fromSlotNum = e.dataTransfer.getData('fromSlot');
+        
+        const piece = document.querySelector(`.code-piece[data-piece-id="${pieceId}"]`);
+        if (!piece) return;
+        
+        const targetSlot = e.target.closest('.solution-slot');
+        const bank = e.target.closest('.piece-bank');
+        const fromSlot = fromSlotNum ? document.querySelector(`.solution-slot[data-slot="${fromSlotNum}"]`) : null;
+        
+        if (targetSlot) {
+            this.placePieceInSlot(piece, targetSlot, fromSlot);
+        } else if (bank) {
+            this.returnPieceToBank(piece, fromSlot);
+        }
+        
+        document.querySelector('.solution-area')?.classList.remove('drag-over');
+    },
+    
+    placePieceInSlot(piece, targetSlot, fromSlot) {
+        const pieceId = parseInt(piece.dataset.pieceId);
+        const targetSlotNum = parseInt(targetSlot.dataset.slot) - 1;
+        
+        // If target slot already has a piece, swap or return to bank
+        const existingPiece = targetSlot.querySelector('.code-piece');
+        if (existingPiece && existingPiece !== piece) {
+            if (fromSlot) {
+                // Swap pieces
+                fromSlot.appendChild(existingPiece);
+                const fromSlotNum = parseInt(fromSlot.dataset.slot) - 1;
+                this.solutionOrder[fromSlotNum] = parseInt(existingPiece.dataset.pieceId);
+            } else {
+                // Return existing piece to bank
+                document.getElementById('piece-bank').appendChild(existingPiece);
+                existingPiece.classList.remove('placed');
+            }
+        }
+        
+        // Clear from slot if moving from another slot
+        if (fromSlot) {
+            const fromSlotNum = parseInt(fromSlot.dataset.slot) - 1;
+            this.solutionOrder[fromSlotNum] = null;
+            fromSlot.classList.remove('filled');
+            // Re-add slot number
+            if (!fromSlot.querySelector('.slot-num')) {
+                const numSpan = document.createElement('span');
+                numSpan.className = 'slot-num';
+                numSpan.textContent = fromSlot.dataset.slot;
+                fromSlot.prepend(numSpan);
+            }
+        }
+        
+        // Place piece in target slot
+        targetSlot.appendChild(piece);
+        piece.classList.add('placed');
+        targetSlot.classList.add('filled');
+        this.solutionOrder[targetSlotNum] = pieceId;
+        
+        // Mark piece in bank as placed (faded)
+        const bankPiece = document.querySelector(`#piece-bank .code-piece[data-piece-id="${pieceId}"]`);
+        if (bankPiece) bankPiece.classList.add('placed');
+    },
+    
+    returnPieceToBank(piece, fromSlot) {
+        const pieceId = parseInt(piece.dataset.pieceId);
+        
+        if (fromSlot) {
+            const fromSlotNum = parseInt(fromSlot.dataset.slot) - 1;
+            this.solutionOrder[fromSlotNum] = null;
+            fromSlot.classList.remove('filled');
+            
+            // Re-add slot number
+            if (!fromSlot.querySelector('.slot-num')) {
+                const numSpan = document.createElement('span');
+                numSpan.className = 'slot-num';
+                numSpan.textContent = fromSlot.dataset.slot;
+                fromSlot.prepend(numSpan);
+            }
+        }
+        
+        document.getElementById('piece-bank').appendChild(piece);
+        piece.classList.remove('placed');
+    },
+    
+    bindEvents() {
+        document.getElementById('btn-run-code')?.addEventListener('click', () => this.runCode());
+        document.getElementById('btn-clear-code')?.addEventListener('click', () => this.clearSolution());
+    },
+    
+    startTimer() {
+        this.updateTimerDisplay();
+        this.updateWindowProgress();
+        
+        this.timerInterval = setInterval(() => {
+            if (this.isCompleted) {
+                clearInterval(this.timerInterval);
+                return;
+            }
+            
+            this.elapsedSeconds++;
+            this.updateTimerDisplay();
+            this.updateWindowProgress();
+            
+            // Auto-submit at 480 seconds
+            if (this.elapsedSeconds >= this.totalTime) {
+                clearInterval(this.timerInterval);
+                this.autoSubmit();
+            }
+        }, 1000);
+    },
+    
+    updateTimerDisplay() {
+        const minutes = Math.floor(this.elapsedSeconds / 60);
+        const seconds = this.elapsedSeconds % 60;
+        const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        document.getElementById('level-timer').textContent = display;
+        
+        // Update window label
+        const windowLabel = document.getElementById('window-label');
+        const currentWindow = this.getCurrentWindow();
+        
+        windowLabel.className = `window-label ${currentWindow}`;
+        windowLabel.textContent = currentWindow.toUpperCase();
+    },
+    
+    updateWindowProgress() {
+        const segments = {
+            early: document.getElementById('seg-early'),
+            mid: document.getElementById('seg-mid'),
+            late: document.getElementById('seg-late')
+        };
+        
+        const currentWindow = this.getCurrentWindow();
+        
+        // Reset all segments
+        Object.values(segments).forEach(seg => {
+            seg.classList.remove('active', 'completed');
+        });
+        
+        if (this.elapsedSeconds <= this.windows.early.end) {
+            // Early window active
+            segments.early.classList.add('active');
+            const percent = (this.elapsedSeconds / this.windows.early.end) * 100;
+            segments.early.querySelector('.seg-fill').style.width = `${percent}%`;
+        } else if (this.elapsedSeconds <= this.windows.mid.end) {
+            // Mid window active
+            segments.early.classList.add('completed');
+            segments.mid.classList.add('active');
+            const elapsed = this.elapsedSeconds - this.windows.early.end;
+            const duration = this.windows.mid.end - this.windows.early.end;
+            const percent = (elapsed / duration) * 100;
+            segments.mid.querySelector('.seg-fill').style.width = `${percent}%`;
+        } else {
+            // Late window active
+            segments.early.classList.add('completed');
+            segments.mid.classList.add('completed');
+            segments.late.classList.add('active');
+            const elapsed = this.elapsedSeconds - this.windows.mid.end;
+            const duration = this.windows.late.end - this.windows.mid.end;
+            const percent = (elapsed / duration) * 100;
+            segments.late.querySelector('.seg-fill').style.width = `${percent}%`;
+        }
+    },
+    
+    getCurrentWindow() {
+        if (this.elapsedSeconds <= this.windows.early.end) return 'early';
+        if (this.elapsedSeconds <= this.windows.mid.end) return 'mid';
+        return 'late';
+    },
+    
+    clearSolution() {
+        const bank = document.getElementById('piece-bank');
+        const slots = document.querySelectorAll('.solution-slot');
+        
+        slots.forEach((slot, idx) => {
+            const piece = slot.querySelector('.code-piece');
+            if (piece) {
+                bank.appendChild(piece);
+                piece.classList.remove('placed');
+            }
+            slot.classList.remove('filled');
+            slot.innerHTML = `<span class="slot-num">${idx + 1}</span>`;
+        });
+        
+        this.solutionOrder = [null, null, null, null, null, null, null, null, null];
+    },
+    
+    runCode() {
+        // Check if all pieces are placed
+        const placedCount = this.solutionOrder.filter(id => id !== null).length;
+        if (placedCount < 9) {
+            Toast.show('PLACE ALL PIECES BEFORE RUNNING', 'error');
+            return;
+        }
+        
+        this.attempts++;
+        
+        // Check if order is correct
+        const isCorrect = this.solutionOrder.every((id, idx) => id === this.correctOrder[idx]);
+        
+        if (isCorrect) {
+            this.handleSuccess();
+        } else {
+            this.handleError();
+        }
+    },
+    
+    handleSuccess() {
+        this.isCompleted = true;
+        clearInterval(this.timerInterval);
+        
+        // Flash green
+        document.getElementById('screen-level-one').classList.add('flash-green');
+        setTimeout(() => {
+            document.getElementById('screen-level-one').classList.remove('flash-green');
+        }, 500);
+        
+        // Calculate points
+        const points = this.calculatePoints();
+        
+        // Update popup
+        const currentWindow = this.getCurrentWindow();
+        document.getElementById('window-result').className = `window-result ${currentWindow}`;
+        document.getElementById('window-result').textContent = currentWindow.toUpperCase();
+        document.getElementById('pts-base').textContent = points.base;
+        document.getElementById('pts-bonus').textContent = `+${points.bonus}`;
+        document.getElementById('pts-penalty').textContent = `-${points.penalty}`;
+        document.getElementById('pts-total').textContent = points.total;
+        
+        // Show success popup
+        document.getElementById('success-popup').style.display = 'block';
+        
+        // Update player score
+        this.playerScore += points.total;
+        document.getElementById('level-score').textContent = `${this.playerScore} PTS`;
+        
+        // Save to localStorage
+        this.saveProgress();
+        
+        // Show level complete after 3 seconds
+        setTimeout(() => {
+            document.getElementById('success-popup').style.display = 'none';
+            document.getElementById('final-score').textContent = `${this.playerScore} POINTS`;
+            document.getElementById('level-complete-overlay').style.display = 'flex';
+        }, 3000);
+    },
+    
+    handleError() {
+        // Flash red
+        document.getElementById('screen-level-one').classList.add('flash-red');
+        setTimeout(() => {
+            document.getElementById('screen-level-one').classList.remove('flash-red');
+        }, 500);
+        
+        // Deduct points
+        this.playerScore = Math.max(0, this.playerScore - 10);
+        document.getElementById('level-score').textContent = `${this.playerScore} PTS`;
+        
+        // Show error popup
+        document.getElementById('error-popup').style.display = 'block';
+        
+        // Hide after 2 seconds
+        setTimeout(() => {
+            document.getElementById('error-popup').style.display = 'none';
+        }, 2000);
+        
+        // Save updated score
+        this.saveProgress();
+    },
+    
+    calculatePoints() {
+        const currentWindow = this.getCurrentWindow();
+        let base = 100;
+        let bonus = 0;
+        let penalty = this.attempts > 1 ? (this.attempts - 1) * 10 : 0;
+        
+        // Window bonuses
+        if (currentWindow === 'early') {
+            bonus = 50;
+        } else if (currentWindow === 'mid') {
+            bonus = 25;
+        } else {
+            bonus = 0;
+        }
+        
+        // Time-based bonus within window
+        const windowData = this.windows[currentWindow];
+        const timeInWindow = this.elapsedSeconds - windowData.start;
+        const windowDuration = windowData.end - windowData.start;
+        const timeBonus = Math.floor((1 - timeInWindow / windowDuration) * 20);
+        bonus += Math.max(0, timeBonus);
+        
+        const total = Math.max(0, base + bonus - penalty);
+        
+        return { base, bonus, penalty, total };
+    },
+    
+    autoSubmit() {
+        // Auto-submit whatever arrangement exists
+        const placedCount = this.solutionOrder.filter(id => id !== null).length;
+        
+        if (placedCount === 9) {
+            this.runCode();
+        } else {
+            // Not all pieces placed - automatic fail
+            this.isCompleted = true;
+            Toast.show('TIME UP! Level failed.', 'error');
+            
+            setTimeout(() => {
+                document.getElementById('final-score').textContent = `${this.playerScore} POINTS`;
+                document.getElementById('level-complete-overlay').style.display = 'flex';
+            }, 2000);
+        }
+    },
+    
+    saveProgress() {
+        // Update player in localStorage
+        const players = Storage.getPlayers();
+        if (players.length > 0) {
+            players[0].score = this.playerScore;
+            players[0].level1Completed = this.isCompleted;
+            Storage.savePlayers(players);
+        }
+        
+        // TODO: Sync with Supabase when integrated
+    },
+    
+    // Called by admin to start level for all players
+    startLevel() {
+        this.init();
+        showScreen('screen-level-one');
+    }
+};
+
+// Admin function to start Level 1
+function adminStartLevel() {
+    const state = Storage.getGameState();
+    state.phase = 'level1';
+    state.currentLevel = 1;
+    Storage.saveGameState(state);
+    
+    // For local testing, start the level
+    Level1.startLevel();
+    
+    Toast.show('Level 1 Started!', 'success');
+}
+
+// Expose Level1 globally
+window.Level1 = Level1;
+window.adminStartLevel = adminStartLevel;
