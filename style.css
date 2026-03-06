@@ -444,6 +444,39 @@ body {
     visibility: visible !important;
 }
 
+.placeholder-level {
+    padding: 4rem 2rem;
+    justify-content: center;
+    text-align: center;
+    gap: 1.5rem;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.placeholder-level .placeholder-content {
+    max-width: 520px;
+    border: 2px dashed rgba(255, 255, 255, 0.25);
+    padding: 2.5rem;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.placeholder-level h1 {
+    margin: 0 0 1rem;
+    font-size: 2.4rem;
+    letter-spacing: 2px;
+    color: var(--neon-gold);
+}
+
+.placeholder-level p {
+    margin: 0.5rem 0;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.placeholder-level p.small {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

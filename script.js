@@ -93,22 +93,26 @@ const DEFAULT_GAMESTATE = {
 // --- HYBRID STORAGE: SUPABASE + LOCALSTORAGE ---
 // --- SUPABASE-ONLY STORAGE: NO LOCALSTORAGE FALLBACKS ---
 const Storage = {
-    // Generate session ID for this game session (persistent across page reloads)
-    sessionId: localStorage.getItem('gameSessionId') || (() => {
-        const newId = Date.now().toString();
-        localStorage.setItem('gameSessionId', newId);
-        return newId;
-    })(),
-    
     // Current room code (for multi-room support)
+    // Cache values for convenience (but always prefer reading from localStorage for the latest state)
     currentRoomCode: localStorage.getItem('currentRoomCode') || 'DEMO01',
-    
+
+    getRoomCode() {
+        return localStorage.getItem('currentRoomCode') || this.currentRoomCode || 'DEMO01';
+    },
+
+    getSessionId() {
+        return localStorage.getItem('gameSessionId') || `session-${this.getRoomCode()}`;
+    },
+
     setRoomCode(roomCode) {
         this.currentRoomCode = roomCode;
         localStorage.setItem('currentRoomCode', roomCode);
-        // Update session ID to be room-specific
-        this.sessionId = `session-${roomCode}-${Date.now()}`;
-        localStorage.setItem('gameSessionId', this.sessionId);
+
+        // Use a consistent session ID per room so all players share the same session
+        const sessionId = `session-${roomCode}`;
+        localStorage.setItem('gameSessionId', sessionId);
+        this.sessionId = sessionId;
     },
     
     async getGameState() {
@@ -120,7 +124,7 @@ const Storage = {
             const { data, error } = await supabaseClient
                 .from('game_sessions')
                 .select('game_state')
-                .eq('room_code', this.currentRoomCode)
+                .eq('session_id', this.getSessionId())
                 .single();
                 
             if (error) {
@@ -145,22 +149,23 @@ const Storage = {
         }
         
         try {
-            const { error } = await supabaseClient
+            const basePayload = {
+                session_id: this.getSessionId(),
+                game_state: state,
+                updated_at: new Date().toISOString()
+            };
+
+            let result = await supabaseClient
                 .from('game_sessions')
-                .upsert({
-                    session_id: this.sessionId,
-                    room_code: this.currentRoomCode,
-                    game_state: state,
-                    updated_at: new Date().toISOString()
-                }, {
+                .upsert(basePayload, {
                     onConflict: 'session_id',
                     ignoreDuplicates: false
                 });
-                
-            if (error) {
-                throw error;
+
+            if (result.error) {
+                throw result.error;
             }
-            
+
             console.log('✅ Game state saved to database');
         } catch (error) {
             console.error('❌ Failed to save game state:', error.message);
@@ -177,7 +182,7 @@ const Storage = {
             const { data, error } = await supabaseClient
                 .from('players')
                 .select('player_data')
-                .eq('room_code', this.currentRoomCode)
+                .eq('session_id', this.getSessionId())
                 .order('created_at', { ascending: true });
                 
             if (error) {
@@ -187,6 +192,10 @@ const Storage = {
             // Extract player objects from player_data column
             return (data || []).map(row => row.player_data);
         } catch (error) {
+            // If table is missing, treat as empty roster
+            if (error && (error.code === 'PGRST205' || (error.message && error.message.includes('players')))) {
+                return [];
+            }
             console.error('❌ Failed to get players:', error.message);
             throw new Error('Database connection failed');
         }
@@ -202,23 +211,20 @@ const Storage = {
                 throw new Error('Players must be an array');
             }
             
-            // Clear existing players for this room
+            // Clear existing players for this session
             const { error: deleteError } = await supabaseClient
                 .from('players')
                 .delete()
-                .eq('room_code', this.currentRoomCode);
-            
-            if (deleteError) {
-                console.warn('Warning deleting existing players:', deleteError.message);
-            }
-            
+                .eq('session_id', this.getSessionId());
+
+        // Ensure any active levels are stopped when roster is cleared
+        stopAllLevels();
             // Insert new players
             if (players.length > 0) {
                 const playersData = players.map(player => ({
                     player_id: player.id,
                     name: player.name,
-                    session_id: this.sessionId,
-                    room_code: this.currentRoomCode,
+                    session_id: this.getSessionId(),
                     player_data: player
                 }));
                 
@@ -243,26 +249,37 @@ const Storage = {
             console.warn('Database not ready - score not saved');
             return;
         }
-        
+
         try {
+            // Ensure a valid level value (database requires NOT NULL)
+            let resolvedLevel = typeof level === 'number' ? level : null;
+            if (resolvedLevel === null) {
+                try {
+                    const gameState = await this.getGameState();
+                    resolvedLevel = gameState?.currentLevel || 1;
+                } catch (e) {
+                    resolvedLevel = 1;
+                }
+            }
+
             const { error } = await supabaseClient
                 .from('player_scores')
                 .insert({
                     player_id: playerId,
                     player_name: playerName,
-                    session_id: this.sessionId,
-                    level,
+                    session_id: this.getSessionId(),
+                    level: resolvedLevel,
                     score,
                     time_spent: timeSpent,
                     score_details: details,
                     completed_at: new Date().toISOString()
                 });
-                
+
             if (error) {
                 throw error;
             }
-            
-            console.log(`✅ Saved score for ${playerName}: L${level} = ${score} pts`);
+
+            console.log(`✅ Saved score for ${playerName}: L${resolvedLevel} = ${score} pts`);
         } catch (error) {
             console.error('❌ Failed to save player score:', error.message);
         }
@@ -293,8 +310,36 @@ const Toast = {
 };
 
 // 4. UI Engine - UPDATED
+function stopAllLevels() {
+    // Call any known level stop handlers to ensure timers are cleared
+    if (typeof Level1 !== 'undefined' && typeof Level1.handleAdminStop === 'function') {
+        Level1.handleAdminStop();
+    }
+    if (typeof Level2 !== 'undefined' && typeof Level2.stopLevel === 'function') {
+        Level2.stopLevel();
+    }
+    if (typeof Level4 !== 'undefined' && typeof Level4.stopLevel === 'function') {
+        Level4.stopLevel();
+    }
+}
+
 function showScreen(screenId) {
-    console.log("Switching to screen -> " + screenId);
+    const legacyMapping = {
+        'level1-screen': 'screen-level-one',
+        'level2-screen': 'screen-level-two',
+        'level3-screen': 'screen-level-three',
+        'level4-screen': 'screen-level-four',
+        'level5-screen': 'screen-level-five'
+    };
+
+    const resolvedId = legacyMapping[screenId] || screenId;
+    // If the target screen is already active, do nothing (avoids log spam)
+    const currentActive = document.querySelector('.screen.active');
+    if (currentActive && currentActive.id === resolvedId) {
+        return;
+    }
+
+    console.log("Switching to screen -> " + resolvedId);
 
     // Hide all divs whose id starts with screen-
     const allScreens = document.querySelectorAll('div[id^="screen-"]');
@@ -310,17 +355,17 @@ function showScreen(screenId) {
         s.classList.remove('active');
     });
 
-    const target = document.getElementById(screenId);
+    const target = document.getElementById(resolvedId);
     if (target) {
         target.style.display = 'flex';
         target.classList.add('active');
 
         // Initial refresh if it's the admin panel
-        if (screenId === 'screen-admin-panel') {
+        if (resolvedId === 'screen-admin-panel') {
             AdminController.refreshAll();
         }
     } else {
-        console.error("Screen element not found -> " + screenId);
+        console.error("Screen element not found -> " + resolvedId);
     }
 }
 
@@ -1216,85 +1261,23 @@ function initNavigation() {
     // Participant flow - join battle
     const startBattleBtn = document.getElementById('start-battle');
     const playerNameInput = document.getElementById('player-name');
-    const roomCodeInput = document.getElementById('room-code');
     const nameError = document.getElementById('name-error');
-    const roomCodeError = document.getElementById('room-code-error');
     const roomInfo = document.getElementById('room-info');
 
-    // Room code validation
-    if (roomCodeInput) {
-        roomCodeInput.onkeyup = async (e) => {
-            const code = e.target.value.trim().toUpperCase();
-            e.target.value = code; // Force uppercase
-            
-            if (code.length === 6) {
-                await validateRoomCode(code);
-            } else {
-                if (roomInfo) roomInfo.classList.add('hidden');
-            }
-        };
+    // Ensure participants see the active section code (admin controls this)
+    if (roomInfo) {
+        roomInfo.classList.remove('hidden');
+        const roomName = document.getElementById('room-name');
+        const roomParticipants = document.getElementById('room-participants');
+        if (roomName) roomName.textContent = `SECTION ID: ${Storage.getSessionId()}`;
+        if (roomParticipants) roomParticipants.textContent = `--/-- participants`;
     }
 
-    async function validateRoomCode(code) {
-        try {
-            const { data: room, error } = await supabaseClient
-                .from('game_rooms')
-                .select('*')
-                .eq('room_code', code)
-                .eq('room_status', 'waiting')
-                .single();
-            
-            if (error || !room) {
-                if (roomCodeError) {
-                    roomCodeError.textContent = 'INVALID OR CLOSED GAME SECTION';
-                    roomCodeError.classList.remove('hidden');
-                }
-                if (roomInfo) roomInfo.classList.add('hidden');
-                return false;
-            }
-            
-            // Valid room found
-            if (roomCodeError) roomCodeError.classList.add('hidden');
-            if (roomInfo) {
-                roomInfo.classList.remove('hidden');
-                const roomName = document.getElementById('room-name');
-                const roomParticipants = document.getElementById('room-participants');
-                if (roomName) roomName.textContent = room.room_name;
-                if (roomParticipants) {
-                    roomParticipants.textContent = `${room.current_participants || 0}/${room.max_participants} participants`;
-                }
-            }
-            return true;
-            
-        } catch (error) {
-            console.error('Room validation error:', error);
-            if (roomCodeError) {
-                roomCodeError.textContent = 'VALIDATION ERROR - CHECK CONNECTION';
-                roomCodeError.classList.remove('hidden');
-            }
-            return false;
-        }
-    }
-
-    if (startBattleBtn && playerNameInput && roomCodeInput) {
+    if (startBattleBtn && playerNameInput) {
         startBattleBtn.onclick = async () => {
             const name = playerNameInput.value.trim().toUpperCase();
-            const roomCode = roomCodeInput.value.trim().toUpperCase();
-            
-            // Validate room code first
-            if (!roomCode || roomCode.length !== 6) {
-                if (roomCodeError) {
-                    roomCodeError.textContent = 'ENTER VALID 6-CHARACTER CODE';
-                    roomCodeError.classList.remove('hidden');
-                }
-                return;
-            }
-            
-            const isValidRoom = await validateRoomCode(roomCode);
-            if (!isValidRoom) {
-                return;
-            }
-            
+            const roomCode = Storage.getRoomCode();
+
             if (!name || name.length < 2) {
                 if (nameError) {
                     nameError.textContent = 'NAME MUST BE AT LEAST 2 CHARACTERS';
@@ -1304,13 +1287,13 @@ function initNavigation() {
             }
 
             try {
-                // Set the room code in Storage
+                // Ensure session is set for the active room
                 Storage.setRoomCode(roomCode);
-                
+
                 // Check if name already exists in this room
                 const players = await Storage.getPlayers();
                 const nameExists = players.some(p => p.name.toUpperCase() === name);
-                
+
                 if (nameExists) {
                     if (nameError) {
                         nameError.textContent = 'NAME ALREADY TAKEN IN THIS SECTION';
@@ -1321,7 +1304,6 @@ function initNavigation() {
 
                 // Hide errors
                 if (nameError) nameError.classList.add('hidden');
-                if (roomCodeError) roomCodeError.classList.add('hidden');
 
                 // Add player to the room
                 const newPlayer = {
@@ -1352,13 +1334,9 @@ function initNavigation() {
             }
         };
 
-        // Enter key to submit for both inputs
+        // Enter key to submit
         playerNameInput.onkeydown = (e) => {
             if (e.key === 'Enter') startBattleBtn.click();
-        };
-        
-        roomCodeInput.onkeydown = (e) => {
-            if (e.key === 'Enter') playerNameInput.focus();
         };
     }
 }
@@ -1367,8 +1345,16 @@ function initNavigation() {
 const ParticipantLobby = {
     pollingInterval: null,
     currentPlayer: null,
+    hasStopped: false,
+    warnedMissingLevel: false,
+    lastGamePhase: null,
+    lastGameLevel: null,
 
     init() {
+        this.hasStopped = false;
+        this.warnedMissingLevel = false;
+        this.lastGamePhase = null;
+        this.lastGameLevel = null;
         this.currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
         this.renderRoomInfo();
         this.renderPlayerList();
@@ -1377,30 +1363,36 @@ const ParticipantLobby = {
     },
 
     async renderRoomInfo() {
-        const roomCode = Storage.getRoomCode();
+        const sessionId = Storage.getSessionId();
         const roomHeader = document.getElementById('lobby-room-info');
         
-        if (roomHeader && roomCode) {
+        if (roomHeader && sessionId) {
             try {
-                const { data: room } = await supabaseClient
-                    .from('game_rooms')
-                    .select('room_name, current_participants, max_participants')
-                    .eq('room_code', roomCode)
-                    .single();
-                
-                if (room) {
-                    roomHeader.innerHTML = `
-                        <div class="room-info-display">
-                            <div class="room-title">${room.room_name}</div>
-                            <div class="room-code">SECTION: ${roomCode}</div>
-                            <div class="room-capacity">${room.current_participants || 0}/${room.max_participants} PARTICIPANTS</div>
-                        </div>
-                    `;
-                } else {
-                    roomHeader.innerHTML = `<div class="room-code">SECTION: ${roomCode}</div>`;
+                // If game_rooms exists, show additional info when possible
+                if (SchemaInspector.has('game_rooms')) {
+                    const roomCode = Storage.getRoomCode();
+                    const { data: room } = await supabaseClient
+                        .from('game_rooms')
+                        .select('room_name, current_participants, max_participants')
+                        .eq('room_code', roomCode)
+                        .single();
+
+                    if (room) {
+                        roomHeader.innerHTML = `
+                            <div class="room-info-display">
+                                <div class="room-title">${room.room_name}</div>
+                                <div class="room-code">SECTION: ${roomCode}</div>
+                                <div class="room-capacity">${room.current_participants || 0}/${room.max_participants} PARTICIPANTS</div>
+                            </div>
+                        `;
+                        return;
+                    }
                 }
+
+                // Default: show the current session ID as the section identifier
+                roomHeader.innerHTML = `<div class="room-code">SECTION ID: ${sessionId}</div>`;
             } catch (error) {
-                roomHeader.innerHTML = `<div class="room-code">SECTION: ${roomCode}</div>`;
+                roomHeader.innerHTML = `<div class="room-code">SECTION ID: ${sessionId}</div>`;
             }
         }
     },
@@ -1455,32 +1447,85 @@ const ParticipantLobby = {
     async checkGameState() {
         try {
             const state = await Storage.getGameState();
-            
+
+            const phaseChanged = state.phase !== this.lastGamePhase;
+            const levelChanged = state.currentLevel !== this.lastGameLevel;
+
+            // If admin has stopped the level, return to the lobby immediately
+            if (state.phase === 'lobby') {
+                if (!this.hasStopped) {
+                    this.stopPolling();
+                    stopAllLevels();
+                    showScreen('lobby-screen');
+                    showToast('Level stopped by admin.', 'warning');
+                    this.hasStopped = true;
+                }
+
+                this.lastGamePhase = state.phase;
+                this.lastGameLevel = state.currentLevel;
+                return;
+            }
+
+            // Reset flags only when phase/level changes
+            if (phaseChanged || levelChanged) {
+                this.hasStopped = false;
+                this.warnedMissingLevel = false;
+            }
+
             // Switch to appropriate level when admin starts playing
             if (state.phase === 'playing') {
                 this.stopPolling();
-                
+
                 // Route to correct level based on currentLevel
                 switch (state.currentLevel) {
                     case 1:
-                        showScreen('level1-screen');
+                        showScreen('screen-level-one');
                         Level1.startLevel();
                         break;
                     case 2:
-                        showScreen('level2-screen');  
+                        showScreen('screen-level-two');
                         Level2.startLevel();
                         break;
+                    case 3:
+                        if (!this.warnedMissingLevel) {
+                            Toast.show('Level 3 is not available yet, showing placeholder.', 'warning');
+                            this.warnedMissingLevel = true;
+                        }
+                        stopAllLevels();
+                        showScreen('screen-level-three');
+                        break;
                     case 4:
-                        showScreen('level4-screen');
+                        showScreen('screen-level-four');
                         Level4.startLevel();
                         break;
+                    case 5:
+                        if (!this.warnedMissingLevel) {
+                            Toast.show('Level 5 is not available yet, showing placeholder.', 'warning');
+                            this.warnedMissingLevel = true;
+                        }
+                        stopAllLevels();
+                        showScreen('screen-level-five');
+                        break;
                     default:
-                        console.warn('Unknown level:', state.currentLevel);
+                        if (!this.warnedMissingLevel) {
+                            console.warn('Unknown level:', state.currentLevel);
+                            Toast.show(`Unknown level: ${state.currentLevel}`, 'error');
+                            this.warnedMissingLevel = true;
+                        }
+                        stopAllLevels();
+                        showScreen('lobby-screen');
                 }
+
+                this.lastGamePhase = state.phase;
+                this.lastGameLevel = state.currentLevel;
             } else if (state.phase === 'results') {
                 // Show results screen
                 this.stopPolling();
+                stopAllLevels();
                 showScreen('results-screen');
+
+                this.lastGamePhase = state.phase;
+                this.lastGameLevel = state.currentLevel;
             }
         } catch (error) {
             console.error('Error checking game state:', error.message);
@@ -1560,44 +1605,51 @@ const Level1 = {
     // Start polling for admin commands
     startAdminPolling() {
         if (this.adminPollingInterval) clearInterval(this.adminPollingInterval);
-        
+
         this.adminPollingInterval = setInterval(async () => {
             try {
                 const state = await Storage.getGameState();
-                
+
                 // Check if admin stopped the level
                 if (state.phase === 'lobby') {
                     this.handleAdminStop();
                     return;
                 }
-                
+
                 // Check if admin wants to show answer
                 if (state.phase === 'show_answer' && !this.answerShown) {
                     this.showCorrectAnswer();
                     this.answerShown = true;
                 }
-                
+
                 // Reset answer shown flag when back to playing
                 if (state.phase === 'playing') {
                     this.answerShown = false;
                 }
-                
+
             } catch (error) {
                 console.error('Error polling admin commands:', error.message);
             }
         }, 1000);
     },
-    
-    handleAdminStop() {
+
+    stopLevel() {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
+            this.timerInterval = null;
         }
         if (this.adminPollingInterval) {
             clearInterval(this.adminPollingInterval);
+            this.adminPollingInterval = null;
         }
-        Toast.show('Level stopped by admin', 'warning');
+        this.isCompleted = true;
         showScreen('lobby-screen');
         ParticipantLobby.init();
+    },
+
+    handleAdminStop() {
+        this.stopLevel();
+        Toast.show('Level stopped by admin', 'warning');
     },
     
     showCorrectAnswer() {
@@ -2076,8 +2128,8 @@ const Level1 = {
             document.getElementById('screen-level-one').classList.remove('flash-red');
         }, 500);
         
-        // Deduct points
-        this.playerScore = Math.max(0, this.playerScore - 10);
+        // Do not deduct points for wrong answers (keep score unchanged)
+        // Score is only awarded for correct completion.
         document.getElementById('level-score').textContent = `${this.playerScore} PTS`;
         
         // Show error popup
@@ -2096,7 +2148,8 @@ const Level1 = {
         const currentWindow = this.getCurrentWindow();
         let base = 100;
         let bonus = 0;
-        let penalty = this.attempts > 1 ? (this.attempts - 1) * 10 : 0;
+        // No penalty for retries; wrong attempts should not reduce available points.
+        let penalty = 0;
         
         // Window bonuses
         if (currentWindow === 'early') {
@@ -2115,7 +2168,7 @@ const Level1 = {
         bonus += Math.max(0, timeBonus);
         
         const total = Math.max(0, base + bonus - penalty);
-        
+
         return { base, bonus, penalty, total };
     },
     
@@ -2794,7 +2847,17 @@ const Level4 = {
             );
         }
     },
-    
+
+    stopLevel() {
+        // Stop the timer and clean up
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        this.isCompleted = true;
+        showScreen('lobby-screen');
+    },
+
     async endLevel() {
         this.isCompleted = true;
         clearInterval(this.timerInterval);

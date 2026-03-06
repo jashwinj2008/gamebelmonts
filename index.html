@@ -1277,6 +1277,378 @@
             text-transform: uppercase;
         }
 
+        /* ===== LEVEL 3: HEAP BUILDER ===== */
+        .heap-screen {
+            padding: 20px 18px 60px;
+        }
+
+        .heap-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            width: 100%;
+            max-width: 1040px;
+            margin: 0 auto 18px;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.12);
+        }
+
+        .heap-topbar .level-badge {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .heap-topbar .lv-num {
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #00ffff;
+        }
+
+        .heap-topbar .lv-name {
+            font-size: 1rem;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .heap-topbar .round-indicator {
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .heap-timer-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .heap-timer {
+            font-family: var(--font-orbitron);
+            font-size: 2.2rem;
+            letter-spacing: 3px;
+            color: #00ffff;
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            min-width: 130px;
+            text-align: center;
+        }
+
+        .heap-window-bar {
+            max-width: 1040px;
+            margin: 0 auto 14px;
+        }
+
+        .heap-window-bar .window-progress-bar {
+            margin: 0;
+        }
+
+        .heap-window-bar .progress-segment {
+            border-radius: 12px;
+        }
+
+        .heap-window-bar .progress-segment .seg-fill {
+            border-radius: 12px;
+        }
+
+        .heap-window-label {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            background: rgba(0, 0, 0, 0.4);
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .heap-window-label.early {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border-color: rgba(255, 215, 0, 0.35);
+        }
+
+        .heap-window-label.mid {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.35);
+        }
+
+        .heap-window-label.late {
+            background: rgba(255, 50, 50, 0.2);
+            color: #ff5050;
+            border-color: rgba(255, 50, 50, 0.35);
+        }
+
+        .heap-round-progress {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 12px auto 22px;
+            max-width: 380px;
+        }
+
+        .heap-round-dot {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-orbitron);
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.65);
+            position: relative;
+        }
+
+        .heap-round-dot.completed {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.7);
+            color: #ffd700;
+        }
+
+        .heap-round-dot.active {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: rgba(0, 255, 255, 0.7);
+            color: #00ffff;
+            box-shadow: 0 0 16px rgba(0, 255, 255, 0.3);
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .heap-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .heap-bank {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 16px;
+            min-height: 78px;
+        }
+
+        .heap-number {
+            width: 62px;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 255, 255, 0.35);
+            border-radius: 14px;
+            font-family: var(--font-orbitron);
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: #00ffff;
+            cursor: grab;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            user-select: none;
+        }
+
+        .heap-number:hover {
+            box-shadow: 0 0 22px rgba(0, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .heap-number.dragging {
+            opacity: 0.6;
+            cursor: grabbing;
+            transform: scale(1.08);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.45);
+        }
+
+        .heap-number.placed {
+            opacity: 0.35;
+        }
+
+        .heap-tree-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 920px;
+            min-height: 420px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .heap-tree {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .heap-tree-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .heap-node {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px dashed rgba(0, 255, 255, 0.35);
+            background: rgba(0, 0, 0, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-orbitron);
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .heap-node.filled {
+            border-style: solid;
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .heap-node.highlight {
+            border-color: rgba(0, 255, 255, 0.9);
+            box-shadow: 0 0 22px rgba(0, 255, 255, 0.45);
+        }
+
+        .heap-node.valid {
+            border-color: rgba(0, 255, 0, 0.85);
+            box-shadow: 0 0 16px rgba(0, 255, 0, 0.3);
+        }
+
+        .heap-node.invalid {
+            border-color: rgba(255, 0, 0, 0.85);
+            box-shadow: 0 0 16px rgba(255, 0, 0, 0.35);
+            animation: pulseRed 0.8s ease-in-out infinite;
+        }
+
+        @keyframes pulseRed {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .heap-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .heap-btn {
+            padding: 12px 22px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.45);
+            color: #00ffff;
+            font-family: var(--font-orbitron);
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .heap-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.35);
+        }
+
+        .heap-btn.validate-btn {
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 255, 0, 0.1));
+            border-color: rgba(0, 255, 0, 0.5);
+            color: #d4ffce;
+        }
+
+        .heap-btn.reset-btn {
+            background: rgba(255, 50, 50, 0.15);
+            border-color: rgba(255, 50, 50, 0.35);
+            color: #ff6666;
+        }
+
+        .heap-instruction-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .heap-instruction-card {
+            max-width: 520px;
+            padding: 28px 24px;
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            background: rgba(0, 0, 0, 0.75);
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 0 24px rgba(0, 255, 255, 0.2);
+        }
+
+        .heap-instruction-card p {
+            font-family: var(--font-orbitron);
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 12px 0;
+        }
+
+        .heap-instruction-card button {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .heap-level-complete-overlay .complete-content {
+            max-width: 540px;
+        }
+
+        .heap-level-complete-overlay .complete-title {
+            font-size: 2.2rem;
+            letter-spacing: 3px;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .heap-level-complete-overlay .level-summary {
+            text-align: left;
+            margin-top: 18px;
+            gap: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .heap-level-complete-overlay .level-summary div {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .heap-level-complete-overlay .level-summary strong {
+            color: #00ffff;
+        }
+
     </style>
 </head>
 
@@ -1360,17 +1732,13 @@
                         </div>
                     </div>
                     <div id="player-input-group" class="input-group hidden">
-                        <p class="input-label">"ENTER GAME SECTION CODE"</p>
-                        <input type="text" id="room-code" placeholder="6-CHARACTER CODE (e.g. ABC123)" maxlength="6" style="text-transform: uppercase;">
-                        <span id="room-code-error" class="error-msg hidden">INVALID OR NON-EXISTENT GAME SECTION</span>
-                        
-                        <div id="room-info" class="room-info hidden">
+                        <div id="room-info" class="room-info">
                             <div class="room-details">
                                 <span id="room-name" class="room-name-display"></span>
                                 <span id="room-participants" class="room-participants-display"></span>
                             </div>
                         </div>
-                        
+
                         <p class="input-label">"ENTER YOUR PIRATE NAME"</p>
                         <input type="text" id="player-name" placeholder="CODENAME" maxlength="20">
                         <span id="name-error" class="error-msg hidden">NAME ALREADY TAKEN BY ANOTHER PIRATE</span>
@@ -1782,6 +2150,113 @@ TypeError: unexpected result — check your logic</pre>
             </div>
         </section>
 
+        <!-- Level 3 Screen - HEAP BUILDER -->
+        <section id="screen-level-three" class="screen heap-screen">
+            <div class="heap-topbar">
+                <div class="level-badge">
+                    <span class="lv-num">LV.3</span>
+                    <span class="lv-name">HEAP BUILDER</span>
+                    <span class="round-indicator">ROUND <span id="heap-round-num">1</span> OF 4</span>
+                </div>
+                <div class="heap-timer-wrap">
+                    <div id="heap-timer" class="heap-timer">08:00</div>
+                    <div id="heap-window-label" class="heap-window-label early">EARLY</div>
+                </div>
+                <div class="level-player-info">
+                    <span id="heap-score">0 PTS</span>
+                    <span id="heap-codename">AGENT</span>
+                </div>
+            </div>
+
+            <div class="heap-window-bar">
+                <div class="window-progress-bar">
+                    <div id="heap-seg-early" class="progress-segment early">
+                        <div class="seg-fill"></div>
+                    </div>
+                    <div id="heap-seg-mid" class="progress-segment mid">
+                        <div class="seg-fill"></div>
+                    </div>
+                    <div id="heap-seg-late" class="progress-segment late">
+                        <div class="seg-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="heap-round-progress" id="heap-round-progress">
+                <div class="heap-round-dot active" data-round="1">R1</div>
+                <div class="heap-round-dot" data-round="2">R2</div>
+                <div class="heap-round-dot" data-round="3">R3</div>
+                <div class="heap-round-dot" data-round="4">R4</div>
+            </div>
+
+            <div class="heap-container">
+                <div id="heap-bank" class="heap-bank"></div>
+
+                <div class="heap-tree-wrapper">
+                    <svg id="heap-tree-lines" class="heap-tree-lines" viewBox="0 0 1000 520" preserveAspectRatio="none"></svg>
+                    <div id="heap-tree" class="heap-tree"></div>
+                </div>
+            </div>
+
+            <div class="heap-actions">
+                <button id="heap-validate" class="heap-btn validate-btn">VALIDATE HEAP</button>
+                <button id="heap-reset" class="heap-btn reset-btn">RESET ROUND</button>
+            </div>
+
+            <!-- Instruction Overlay -->
+            <div id="heap-instruction-overlay" class="heap-instruction-overlay" style="display:none;">
+                <div class="heap-instruction-card">
+                    <p>Every parent must be bigger than its children.</p>
+                    <p>Drag the numbers — Big on top. Small at the bottom</p>
+                    <button id="heap-instruction-go" class="heap-btn validate-btn">LET'S GO</button>
+                </div>
+            </div>
+
+            <!-- Success Popup -->
+            <div id="heap-success-popup" class="terminal-popup" style="display:none;">
+                <div class="popup-header success">MAX HEAP VALIDATED</div>
+                <div class="popup-body">
+                    <div class="output-label" id="heap-popup-round">ROUND 1 OF 4 COMPLETE</div>
+                    <div class="window-result" id="heap-popup-window">EARLY</div>
+                    <table class="points-table">
+                        <tr><td>Base Points</td><td id="heap-pts-base">0</td></tr>
+                        <tr><td>Time Bonus</td><td id="heap-pts-bonus">0</td></tr>
+                        <tr><td>Penalty</td><td id="heap-pts-penalty">0</td></tr>
+                        <tr class="total-row"><td>TOTAL</td><td id="heap-pts-total">0</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Error Popup -->
+            <div id="heap-error-popup" class="terminal-popup" style="display:none;">
+                <div class="popup-header error">HEAP VIOLATION DETECTED</div>
+                <div class="popup-body">
+                    <div class="traceback" id="heap-error-message">The heap rule has been broken in one or more nodes.</div>
+                    <div class="error-hint">REARRANGE AND TRY AGAIN</div>
+                    <div class="penalty-notice" id="heap-penalty-info">-15 points</div>
+                </div>
+            </div>
+
+            <!-- Level Complete Overlay -->
+            <div id="heap-level-complete-overlay" class="level-complete-overlay heap-level-complete-overlay" style="display:none;">
+                <div class="complete-content">
+                    <div class="complete-icon">🏆</div>
+                    <h1 class="complete-title">LEVEL 3 COMPLETE</h1>
+                    <div class="level-summary">
+                        <div>ROUNDS COMPLETED: <strong id="heap-complete-rounds">0</strong> / 4</div>
+                        <div>TOTAL POINTS: <strong id="heap-complete-points">0</strong></div>
+                        <div>CUMULATIVE SCORE: <strong id="heap-complete-cumulative">0</strong></div>
+                        <div>TIME LEFT: <strong id="heap-complete-time">00:00</strong></div>
+                    </div>
+                    <div class="points-table" id="heap-complete-breakdown" style="margin-top: 14px;">
+                        <!-- Round breakdown injected -->
+                    </div>
+                    <p class="standby-msg">STANDBY FOR NEXT ORDERS</p>
+                    <div class="waiting-indicator"><span class="pulse-dot"></span> Waiting for admin...</div>
+                </div>
+            </div>
+        </section>
+
         <!-- Level 4 Screen - Bonus Round 2 -->
         <section id="screen-level-four" class="screen bonus-level purple-theme">
             <!-- Unlock Banner (shown briefly) -->
@@ -1846,10 +2321,743 @@ TypeError: unexpected result — check your logic</pre>
                 </div>
             </div>
         </section>
+
+        <!-- Level 5 Screen (Placeholder) -->
+        <section id="screen-level-five" class="screen placeholder-level">
+            <div class="placeholder-content">
+                <h1>LEVEL 5 (COMING SOON)</h1>
+                <p>Final boss coming soon. Thanks for playing!</p>
+                <p class="small">Please ask the admin to select another level.</p>
+            </div>
+        </section>
     </main>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2" crossorigin></script>
-    <script src="script.js?v=2.4"></script>
+    <script src="script.js?v=2.7"></script>
+
+    <!-- LEVEL 3: HEAP BUILDER LOGIC -->
+    <script>
+        (function () {
+            const LEVEL3_PUZZLES = [
+                {
+                    title: 'ROUND 1 — BUILD YOUR FIRST MAX HEAP',
+                    numbers: [15, 40, 10, 30, 20],
+                    nodeCount: 5,
+                    validEdges: [[0,1],[0,2],[1,3],[1,4]]
+                },
+                {
+                    title: 'ROUND 2 — BIGGER NUMBERS SAME RULES',
+                    numbers: [55, 90, 22, 75, 38],
+                    nodeCount: 5,
+                    validEdges: [[0,1],[0,2],[1,3],[1,4]]
+                },
+                {
+                    title: 'ROUND 3 — SEVEN NODES NOW',
+                    numbers: [12, 85, 47, 63, 29, 91, 55],
+                    nodeCount: 7,
+                    validEdges: [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]]
+                },
+                {
+                    title: 'ROUND 4 — FINAL BOSS HEAP',
+                    numbers: [33, 100, 71, 58, 44, 88, 19],
+                    nodeCount: 7,
+                    validEdges: [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]]
+                }
+            ];
+
+            const Level3 = {
+                totalTime: 480,
+                remainingSeconds: 480,
+                timerInterval: null,
+                adminPollingInterval: null,
+                isRunning: false,
+                answerShown: false,
+
+                playerId: null,
+                playerName: 'AGENT',
+                playerScore: 0,
+
+                round: 1,
+                attempts: 0,
+                totalPenalties: 0,
+                totalPointsEarned: 0,
+                roundsData: [],
+
+                nodeValues: [],
+                currentPuzzle: null,
+
+                init() {
+                    this.isRunning = true;
+                    this.answerShown = false;
+                    this.round = 1;
+                    this.attempts = 0;
+                    this.totalPenalties = 0;
+                    this.totalPointsEarned = 0;
+                    this.roundsData = [];
+                    this.remainingSeconds = this.totalTime;
+                    this.nodeValues = [];
+
+                    this.loadPlayerInfo();
+                    this.bindUI();
+                    this.renderRoundIndicator();
+                    this.showInstructionOverlay();
+                    this.startAdminPolling();
+                },
+
+                loadPlayerInfo() {
+                    const currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
+                    if (currentPlayer) {
+                        this.playerId = currentPlayer.id;
+                        this.playerName = currentPlayer.name || 'AGENT';
+                        this.playerScore = currentPlayer.score || 0;
+                    }
+                    document.getElementById('heap-codename').textContent = this.playerName;
+                    document.getElementById('heap-score').textContent = `${this.playerScore} PTS`;
+                },
+
+                bindUI() {
+                    document.getElementById('heap-validate')?.addEventListener('click', () => this.validateHeap());
+                    document.getElementById('heap-reset')?.addEventListener('click', () => this.resetRound());
+                    document.getElementById('heap-instruction-go')?.addEventListener('click', () => this.startRound());
+                },
+
+                showInstructionOverlay() {
+                    const overlay = document.getElementById('heap-instruction-overlay');
+                    if (overlay) overlay.style.display = 'flex';
+                },
+
+                hideInstructionOverlay() {
+                    const overlay = document.getElementById('heap-instruction-overlay');
+                    if (overlay) overlay.style.display = 'none';
+                },
+
+                startRound() {
+                    this.hideInstructionOverlay();
+                    this.renderRoundIndicator();
+                    this.loadPuzzle();
+                    this.startTimer();
+                },
+
+                loadPuzzle() {
+                    const puzzle = LEVEL3_PUZZLES[this.round - 1];
+                    if (!puzzle) return;
+                    this.currentPuzzle = puzzle;
+                    this.nodeValues = Array(puzzle.nodeCount).fill(null);
+                    this.attempts = 0;
+                    this.answerShown = false;
+
+                    document.getElementById('heap-round-num').textContent = `${this.round}`;
+                    document.getElementById('heap-popup-round').textContent = `ROUND ${this.round} OF 4 COMPLETE`;
+
+                    // Render bank and tree
+                    this.renderBank(puzzle.numbers);
+                    this.renderTree(puzzle.nodeCount);
+
+                    // Reset popups
+                    document.getElementById('heap-success-popup').style.display = 'none';
+                    document.getElementById('heap-error-popup').style.display = 'none';
+                },
+
+                renderRoundIndicator() {
+                    const dots = document.querySelectorAll('#heap-round-progress .heap-round-dot');
+                    dots.forEach(dot => {
+                        const roundNum = parseInt(dot.dataset.round, 10);
+                        dot.classList.toggle('completed', roundNum < this.round);
+                        dot.classList.toggle('active', roundNum === this.round);
+                    });
+                },
+
+                renderBank(numbers) {
+                    const bank = document.getElementById('heap-bank');
+                    if (!bank) return;
+                    bank.innerHTML = '';
+                    numbers.forEach(num => {
+                        const chip = document.createElement('div');
+                        chip.className = 'heap-number';
+                        chip.draggable = true;
+                        chip.dataset.value = num;
+                        chip.textContent = num;
+                        chip.addEventListener('dragstart', (e) => this.handleDragStart(e, { type: 'bank' }));
+                        chip.addEventListener('dragend', (e) => this.handleDragEnd(e));
+                        bank.appendChild(chip);
+                    });
+                },
+
+                renderTree(count) {
+                    const tree = document.getElementById('heap-tree');
+                    const svg = document.getElementById('heap-tree-lines');
+                    if (!tree || !svg) return;
+
+                    tree.innerHTML = '';
+                    svg.innerHTML = '';
+
+                    const positions = this.getNodePositions(count);
+                    positions.forEach((pos, idx) => {
+                        const node = document.createElement('div');
+                        node.className = 'heap-node';
+                        node.dataset.index = idx;
+                        node.style.left = `${pos.x}%`;
+                        node.style.top = `${pos.y}%`;
+                        node.addEventListener('dragover', (e) => e.preventDefault());
+                        node.addEventListener('dragenter', () => node.classList.add('highlight'));
+                        node.addEventListener('dragleave', () => node.classList.remove('highlight'));
+                        node.addEventListener('drop', (e) => this.handleDrop(e, idx));
+                        tree.appendChild(node);
+                    });
+
+                    // Lines
+                    const edges = this.currentPuzzle?.validEdges || [];
+                    edges.forEach(([parent, child]) => {
+                        const p = positions[parent];
+                        const c = positions[child];
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', `${p.x}%`);
+                        line.setAttribute('y1', `${p.y}%`);
+                        line.setAttribute('x2', `${c.x}%`);
+                        line.setAttribute('y2', `${c.y}%`);
+                        line.setAttribute('stroke', 'rgba(0, 255, 255, 0.5)');
+                        line.setAttribute('stroke-width', '2');
+                        svg.appendChild(line);
+                    });
+                },
+
+                getNodePositions(count) {
+                    if (count === 5) {
+                        return [
+                            { x: 50, y: 10 },
+                            { x: 25, y: 28 },
+                            { x: 75, y: 28 },
+                            { x: 16, y: 56 },
+                            { x: 34, y: 56 }
+                        ];
+                    }
+                    // 7 nodes
+                    return [
+                        { x: 50, y: 10 },
+                        { x: 24, y: 26 },
+                        { x: 76, y: 26 },
+                        { x: 12, y: 54 },
+                        { x: 36, y: 54 },
+                        { x: 64, y: 54 },
+                        { x: 88, y: 54 }
+                    ];
+                },
+
+                handleDragStart(e, metadata) {
+                    const chip = e.target.closest('.heap-number');
+                    if (!chip) return;
+                    const node = chip.closest('.heap-node');
+                    const sourceIndex = node ? node.dataset.index : '';
+                    e.dataTransfer.setData('text/plain', chip.dataset.value);
+                    e.dataTransfer.setData('source', metadata.type);
+                    if (sourceIndex) e.dataTransfer.setData('sourceIndex', sourceIndex);
+                    chip.classList.add('dragging');
+                },
+
+                handleDragEnd(e) {
+                    const chip = e.target.closest('.heap-number');
+                    if (chip) chip.classList.remove('dragging');
+                },
+
+                handleDrop(e, nodeIndex) {
+                    e.preventDefault();
+                    const value = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                    if (Number.isNaN(value)) return;
+
+                    const source = e.dataTransfer.getData('source');
+                    const sourceIndex = e.dataTransfer.getData('sourceIndex');
+                    this.placeValueInNode(value, nodeIndex, source, sourceIndex);
+                },
+
+                placeValueInNode(value, nodeIndex, source, sourceIndex) {
+                    const node = document.querySelector(`.heap-node[data-index="${nodeIndex}"]`);
+                    if (!node) return;
+
+                    // Clear source node if moving from one node to another
+                    if (source === 'node' && sourceIndex) {
+                        const prevIdx = parseInt(sourceIndex, 10);
+                        if (!Number.isNaN(prevIdx) && prevIdx !== nodeIndex) {
+                            const prevNode = document.querySelector(`.heap-node[data-index="${prevIdx}"]`);
+                            if (prevNode) {
+                                prevNode.classList.remove('filled', 'valid', 'invalid');
+                                prevNode.innerHTML = '';
+                            }
+                            this.nodeValues[prevIdx] = null;
+                        }
+                    }
+
+                    // If node already has a value, return it to bank
+                    const existing = node.querySelector('.heap-number');
+                    if (existing) {
+                        this.returnToBank(existing);
+                    }
+
+                    // Remove from bank if source
+                    if (source === 'bank') {
+                        const chip = document.querySelector(`#heap-bank .heap-number[data-value="${value}"]`);
+                        if (chip) chip.remove();
+                    }
+
+                    const chip = document.createElement('div');
+                    chip.className = 'heap-number placed';
+                    chip.draggable = true;
+                    chip.dataset.value = value;
+                    chip.textContent = value;
+                    chip.addEventListener('dragstart', (e) => this.handleDragStart(e, { type: 'node' }));
+                    chip.addEventListener('dragend', (e) => this.handleDragEnd(e));
+
+                    node.innerHTML = '';
+                    node.appendChild(chip);
+                    node.classList.add('filled');
+                    this.nodeValues[nodeIndex] = value;
+                },
+
+                returnToBank(chip) {
+                    const bank = document.getElementById('heap-bank');
+                    if (!bank) return;
+                    const value = chip.dataset.value;
+                    const bankChip = document.createElement('div');
+                    bankChip.className = 'heap-number';
+                    bankChip.draggable = true;
+                    bankChip.dataset.value = value;
+                    bankChip.textContent = value;
+                    bankChip.addEventListener('dragstart', (e) => this.handleDragStart(e, { type: 'bank' }));
+                    bankChip.addEventListener('dragend', (e) => this.handleDragEnd(e));
+                    bank.appendChild(bankChip);
+                    chip.remove();
+
+                    // Update nodeValues
+                    const node = chip.closest('.heap-node');
+                    if (node && node.dataset.index) {
+                        const idx = parseInt(node.dataset.index, 10);
+                        this.nodeValues[idx] = null;
+                        node.classList.remove('filled', 'valid', 'invalid');
+                        node.innerHTML = '';
+                    }
+                },
+
+                resetRound() {
+                    this.loadPuzzle();
+                },
+
+                validateHeap() {
+                    const filledCount = this.nodeValues.filter(v => v !== null).length;
+                    if (filledCount < (this.currentPuzzle?.nodeCount || 0)) {
+                        Toast.show('FILL ALL NODES BEFORE VALIDATING', 'error');
+                        return;
+                    }
+
+                    this.attempts += 1;
+                    const { valid, badNodes } = this.validateRules();
+                    if (!valid) {
+                        this.handleValidationFailure(badNodes);
+                    } else {
+                        this.handleValidationSuccess();
+                    }
+                },
+
+                validateRules() {
+                    const edges = this.currentPuzzle.validEdges;
+                    const bad = new Set();
+                    edges.forEach(([parent, child]) => {
+                        const pVal = this.nodeValues[parent];
+                        const cVal = this.nodeValues[child];
+                        if (pVal === null || cVal === null) return;
+                        if (pVal < cVal) {
+                            bad.add(parent);
+                            bad.add(child);
+                        }
+                    });
+
+                    // Mark nodes
+                    document.querySelectorAll('.heap-node').forEach(node => {
+                        node.classList.remove('valid', 'invalid');
+                        const idx = parseInt(node.dataset.index, 10);
+                        if (bad.has(idx)) {
+                            node.classList.add('invalid');
+                        } else if (this.nodeValues[idx] !== null) {
+                            node.classList.add('valid');
+                        }
+                    });
+
+                    return { valid: bad.size === 0, badNodes: Array.from(bad) };
+                },
+
+                handleValidationFailure(badNodes) {
+                    this.totalPenalties += 15;
+                    this.playerScore = Math.max(0, this.playerScore - 15);
+                    this.savePlayerScoreImmediate();
+
+                    // Highlight bad nodes longer
+                    setTimeout(() => {
+                        badNodes.forEach(idx => {
+                            const node = document.querySelector(`.heap-node[data-index="${idx}"]`);
+                            if (node) node.classList.remove('invalid');
+                        });
+                    }, 1200);
+
+                    document.getElementById('heap-penalty-info').textContent = `-${this.totalPenalties}`;
+                    document.getElementById('heap-score').textContent = `${this.playerScore} PTS`;
+
+                    // Flash red and show popup
+                    const overlay = document.getElementById('heap-error-popup');
+                    if (overlay) overlay.style.display = 'block';
+                    setTimeout(() => {
+                        if (overlay) overlay.style.display = 'none';
+                    }, 1800);
+                },
+
+                handleValidationSuccess() {
+                    // Calculate points for this round
+                    const points = this.calculatePoints();
+                    this.totalPointsEarned += points.total;
+                    this.playerScore += points.total;
+
+                    this.roundsData.push({
+                        roundNumber: this.round,
+                        solved: true,
+                        window: points.window,
+                        attempts: this.attempts,
+                        pointsEarned: points.total
+                    });
+
+                    // Update score display
+                    document.getElementById('heap-score').textContent = `${this.playerScore} PTS`;
+
+                    // Show success popup
+                    document.getElementById('heap-popup-window').textContent = points.window;
+                    document.getElementById('heap-pts-base').textContent = points.base;
+                    document.getElementById('heap-pts-bonus').textContent = `+${points.bonus}`;
+                    document.getElementById('heap-pts-penalty').textContent = `-${this.totalPenalties}`;
+                    document.getElementById('heap-pts-total').textContent = points.total;
+                    document.getElementById('heap-success-popup').style.display = 'block';
+
+                    // Save progress now
+                    this.saveProgress();
+
+                    // Move to next round after delay
+                    setTimeout(() => {
+                        document.getElementById('heap-success-popup').style.display = 'none';
+                        this.nextRound();
+                    }, 2000);
+                },
+
+                calculatePoints() {
+                    const timeRemaining = this.remainingSeconds;
+                    let base = 0;
+                    let bonus = 0;
+                    let window = 'LATE';
+
+                    if (timeRemaining >= 320) {
+                        window = 'EARLY';
+                        base = 150;
+                        bonus = Math.floor(timeRemaining * 0.5);
+                        const total = Math.min(390, base + bonus);
+                        return { base, bonus: total - base, total, window };
+                    }
+                    if (timeRemaining >= 160) {
+                        window = 'MID';
+                        base = 100;
+                        bonus = Math.floor(timeRemaining * 0.3);
+                        const total = Math.min(196, base + bonus);
+                        return { base, bonus: total - base, total, window };
+                    }
+
+                    window = 'LATE';
+                    base = 50;
+                    bonus = 0;
+                    return { base, bonus, total: 50, window };
+                },
+
+                nextRound() {
+                    if (this.round >= 4 || this.remainingSeconds <= 0) {
+                        this.finishLevel();
+                        return;
+                    }
+                    this.round += 1;
+                    this.renderRoundIndicator();
+                    this.loadPuzzle();
+                },
+
+                finishLevel() {
+                    this.isRunning = false;
+                    clearInterval(this.timerInterval);
+                    clearInterval(this.adminPollingInterval);
+
+                    // Show completion overlay
+                    document.getElementById('heap-complete-rounds').textContent = Math.min(this.round, 4);
+                    document.getElementById('heap-complete-points').textContent = this.totalPointsEarned;
+                    document.getElementById('heap-complete-cumulative').textContent = this.playerScore;
+                    document.getElementById('heap-complete-time').textContent = this.formatTime(this.remainingSeconds);
+
+                    // Build breakdown table
+                    const breakdown = document.getElementById('heap-complete-breakdown');
+                    if (breakdown) {
+                        breakdown.innerHTML = '<tr><td>ROUND</td><td>WINDOW</td><td>PTS</td></tr>';
+                        this.roundsData.forEach(r => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td>R${r.roundNumber}</td><td>${r.window}</td><td>${r.pointsEarned}</td>`;
+                            breakdown.appendChild(tr);
+                        });
+                    }
+
+                    document.getElementById('heap-level-complete-overlay').style.display = 'flex';
+
+                    // Save final answers data
+                    this.saveProgress(true);
+
+                    // Auto stop the game for everyone if all players done
+                    this.checkAutoStop();
+                },
+
+                formatTime(seconds) {
+                    const m = Math.floor(seconds / 60);
+                    const s = seconds % 60;
+                    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                },
+
+                startTimer() {
+                    this.updateTimerDisplay();
+                    this.updateWindowProgress();
+                    if (this.timerInterval) clearInterval(this.timerInterval);
+
+                    this.timerInterval = setInterval(() => {
+                        if (!this.isRunning) {
+                            clearInterval(this.timerInterval);
+                            return;
+                        }
+                        this.remainingSeconds = Math.max(0, this.remainingSeconds - 1);
+                        this.updateTimerDisplay();
+                        this.updateWindowProgress();
+
+                        if (this.remainingSeconds <= 0) {
+                            clearInterval(this.timerInterval);
+                            this.finishLevel();
+                        }
+                    }, 1000);
+                },
+
+                updateTimerDisplay() {
+                    document.getElementById('heap-timer').textContent = this.formatTime(this.remainingSeconds);
+                    const windowName = this.getCurrentWindow().toLowerCase();
+                    const label = document.getElementById('heap-window-label');
+                    label.className = `heap-window-label ${windowName}`;
+                    label.textContent = windowName.toUpperCase();
+                },
+
+                updateWindowProgress() {
+                    const segments = {
+                        early: document.getElementById('heap-seg-early'),
+                        mid: document.getElementById('heap-seg-mid'),
+                        late: document.getElementById('heap-seg-late')
+                    };
+
+                    const currentWindow = this.getCurrentWindow();
+
+                    Object.values(segments).forEach(seg => {
+                        seg.classList.remove('active', 'completed');
+                    });
+
+                    if (this.remainingSeconds >= 320) {
+                        segments.early.classList.add('active');
+                        const percent = ((this.remainingSeconds - 320) / 160) * 100;
+                        segments.early.querySelector('.seg-fill').style.width = `${Math.min(100, percent)}%`;
+                    } else if (this.remainingSeconds >= 160) {
+                        segments.early.classList.add('completed');
+                        segments.mid.classList.add('active');
+                        const percent = ((this.remainingSeconds - 160) / 160) * 100;
+                        segments.mid.querySelector('.seg-fill').style.width = `${Math.min(100, percent)}%`;
+                    } else {
+                        segments.early.classList.add('completed');
+                        segments.mid.classList.add('completed');
+                        segments.late.classList.add('active');
+                        const percent = (this.remainingSeconds / 160) * 100;
+                        segments.late.querySelector('.seg-fill').style.width = `${Math.min(100, percent)}%`;
+                    }
+                },
+
+                getCurrentWindow() {
+                    if (this.remainingSeconds >= 320) return 'EARLY';
+                    if (this.remainingSeconds >= 160) return 'MID';
+                    return 'LATE';
+                },
+
+                startAdminPolling() {
+                    if (this.adminPollingInterval) clearInterval(this.adminPollingInterval);
+                    this.adminPollingInterval = setInterval(async () => {
+                        try {
+                            const state = await Storage.getGameState();
+                            if (!state) return;
+
+                            if (state.phase === 'lobby') {
+                                this.stopLevel();
+                                return;
+                            }
+
+                            if (state.phase === 'show_answer' && !this.answerShown) {
+                                this.showCorrectSolution();
+                                this.answerShown = true;
+                            }
+
+                            if (state.phase === 'playing') {
+                                this.answerShown = false;
+                            }
+
+                        } catch (err) {
+                            console.error('Level3 admin polling error', err);
+                        }
+                    }, 1200);
+                },
+
+                showCorrectSolution() {
+                    if (!this.currentPuzzle) return;
+                    const solution = this.getSampleSolution();
+                    Object.entries(solution).forEach(([idx, value]) => {
+                        const node = document.querySelector(`.heap-node[data-index="${idx}"]`);
+                        if (node) {
+                            node.classList.add('valid');
+                            node.classList.remove('invalid');
+                            node.innerHTML = `<div class="heap-number placed" draggable="false">${value}</div>`;
+                        }
+                    });
+                    Toast.show('Correct heap revealed', 'info');
+                },
+
+                getSampleSolution() {
+                    // Provide a valid solution for the current round
+                    if (!this.currentPuzzle) return {};
+                    const mapping = {
+                        1: {0: 40,1:30,2:20,3:10,4:15},
+                        2: {0: 90,1:75,2:55,3:22,4:38},
+                        3: {0: 91,1:85,2:63,3:47,4:55,5:12,6:29},
+                        4: {0: 100,1:88,2:71,3:58,4:44,5:33,6:19}
+                    };
+                    return mapping[this.round] || {};
+                },
+
+                stopLevel() {
+                    this.isRunning = false;
+                    clearInterval(this.timerInterval);
+                    clearInterval(this.adminPollingInterval);
+                    this.hideInstructionOverlay();
+                    document.getElementById('heap-level-complete-overlay')?.style.display = 'none';
+                    showScreen('lobby-screen');
+                },
+
+                async saveProgress(finalize = false) {
+                    const currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
+                    if (!currentPlayer) return;
+
+                    const players = await Storage.getPlayers();
+                    const idx = players.findIndex(p => p.id === currentPlayer.id);
+                    if (idx === -1) return;
+
+                    const player = players[idx];
+                    player.score = this.playerScore;
+                    player.answers = player.answers || {};
+                    player.answers.level3 = {
+                        roundsCompleted: Math.min(this.round, 4),
+                        timeRemaining: this.remainingSeconds,
+                        totalPenalties: this.totalPenalties,
+                        pointsEarned: this.totalPointsEarned,
+                        rounds: this.roundsData
+                    };
+
+                    players[idx] = player;
+                    await Storage.savePlayers(players);
+
+                    // Also update supabase score record
+                    await Storage.savePlayerScore(
+                        currentPlayer.id,
+                        currentPlayer.name,
+                        3,
+                        this.playerScore,
+                        this.totalTime - this.remainingSeconds,
+                        {
+                            level: 3,
+                            timeRemaining: this.remainingSeconds,
+                            roundsCompleted: Math.min(this.round, 4),
+                            totalPenalties: this.totalPenalties,
+                            pointsEarned: this.totalPointsEarned,
+                            rounds: this.roundsData
+                        }
+                    );
+
+                    // Update local cache
+                    localStorage.setItem('currentPlayer', JSON.stringify(player));
+
+                    if (finalize) {
+                        this.checkAutoStop();
+                    }
+                },
+
+                async savePlayerScoreImmediate() {
+                    const currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
+                    if (!currentPlayer) return;
+                    // Update in-memory and storage
+                    this.playerScore = Math.max(0, this.playerScore);
+                    await this.saveProgress();
+                },
+
+                async checkAutoStop() {
+                    try {
+                        const players = await Storage.getPlayers();
+                        const allDone = players.length > 0 && players.every(p => p.answers?.level3?.roundsCompleted >= 4);
+                        if (allDone) {
+                            const state = await Storage.getGameState();
+                            if (state.phase !== 'lobby') {
+                                state.phase = 'lobby';
+                                await Storage.saveGameState(state);
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Auto-stop check failed', error.message);
+                    }
+                }
+            };
+
+            window.Level3 = Level3;
+
+            // Patch ParticipantLobby to include Level 3 handling
+            const originalCheckGameState = ParticipantLobby.checkGameState.bind(ParticipantLobby);
+            ParticipantLobby.checkGameState = async function () {
+                try {
+                    const state = await Storage.getGameState();
+                    if (state && state.phase === 'playing' && state.currentLevel === 3) {
+                        showScreen('screen-level-three');
+                        if (!Level3.isRunning) {
+                            Level3.init();
+                        }
+                        return;
+                    }
+
+                    // If we were running Level 3 but now not, stop it
+                    if (Level3.isRunning && (!state || state.currentLevel !== 3 || state.phase !== 'playing')) {
+                        Level3.stopLevel();
+                    }
+                } catch (err) {
+                    console.error('Level3 checkGameState patch error', err);
+                }
+
+                return originalCheckGameState();
+            };
+
+            // Ensure correct start if already in level 3 when page loads
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(async () => {
+                    try {
+                        const state = await Storage.getGameState();
+                        if (state?.phase === 'playing' && state.currentLevel === 3) {
+                            showScreen('screen-level-three');
+                            Level3.init();
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                }, 200);
+            });
+        })();
+    </script>
 
 </body>
 
