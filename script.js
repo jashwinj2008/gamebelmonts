@@ -345,14 +345,14 @@ const AdminController = {
 function initNavigation() {
     // Admin login redirect logic
     if (window.location.search.includes('admin=1')) {
-        showScreen('screen-admin-login');
+        showScreen('admin-login-screen');
     }
 
     // Wiring existing Admin card on home screen
     const roleCards = document.querySelectorAll('.role-card');
     roleCards.forEach(card => {
         if (card.innerText.includes('ADMIN') || card.innerText.includes('Control the Battle')) {
-            card.onclick = () => showScreen('screen-admin-login');
+            card.onclick = () => showScreen('admin-login-screen');
         }
 
         if (card.innerText.includes('PARTICIPANT')) {
