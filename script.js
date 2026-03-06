@@ -117,6 +117,21 @@ function showScreen(screenId) {
 
 function updateUI() {
     try {
+        // Lobby page logic
+        if (document.body.contains(document.getElementById('players-count'))) {
+            const players = state.global.players || [];
+            const countSpan = document.getElementById('players-count');
+            const list = document.getElementById('players-list');
+            if (countSpan) countSpan.textContent = `Players Joined: ${players.length} / 60`;
+            if (list) {
+                list.innerHTML = '';
+                players.forEach(p => {
+                    const li = document.createElement('li');
+                    li.textContent = p.name || p.codename || p.id;
+                    list.appendChild(li);
+                });
+            }
+        }
         // Removed admin panel logic
         if (state.userRole === 'PARTICIPANT' || state.playerId) syncParticipantScreen();
     } catch (e) {
