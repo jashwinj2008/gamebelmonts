@@ -981,6 +981,46 @@ select.admin-input option {
     justify-content: flex-end;
 }
 
+/* Room info display */
+.room-info-container {
+    margin: 15px 0;
+    width: 100%;
+    max-width: 800px;
+}
+
+.room-info-display {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #ff4444;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+}
+
+.room-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #ff6666;
+    margin-bottom: 5px;
+    font-family: var(--font-orbitron);
+}
+
+.room-code {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #ffff66;
+    text-shadow: 0 0 10px rgba(255, 255, 102, 0.5);
+    margin-bottom: 5px;
+    font-family: var(--font-orbitron);
+    letter-spacing: 2px;
+}
+
+.room-capacity {
+    font-size: 0.9em;
+    color: #cccccc;
+    font-family: var(--font-orbitron);
+}
+
 #participant-count-badge {
     padding: 10px 20px;
     color: var(--neon-blue);
@@ -2279,5 +2319,515 @@ select.admin-input option {
 
     .terminal-popup {
         width: 95%;
+    }
+}
+
+/* ============ BONUS LEVELS (Level 2 & 4) ============ */
+
+/* Base Bonus Level Styling */
+.bonus-level {
+    flex-direction: column;
+    padding: 0;
+    min-height: 100vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.bonus-level.gold-theme {
+    background: linear-gradient(135deg, #1a1500 0%, #2d2000 50%, #1a1200 100%);
+}
+
+.bonus-level.purple-theme {
+    background: linear-gradient(135deg, #0f0a1a 0%, #1a102e 50%, #0f0a1a 100%);
+}
+
+/* Unlock Banner */
+.bonus-unlock-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    animation: bannerFadeIn 0.5s ease;
+}
+
+.bonus-unlock-banner.gold {
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, rgba(0, 0, 0, 0.95) 70%);
+}
+
+.bonus-unlock-banner.purple {
+    background: radial-gradient(circle, rgba(138, 43, 226, 0.3) 0%, rgba(0, 0, 0, 0.95) 70%);
+}
+
+.banner-glow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    animation: glowPulse 1s ease-in-out infinite;
+}
+
+.bonus-unlock-banner.gold .banner-glow {
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
+}
+
+.bonus-unlock-banner.purple .banner-glow {
+    background: radial-gradient(circle, rgba(138, 43, 226, 0.5) 0%, transparent 70%);
+}
+
+@keyframes glowPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.bonus-unlock-banner h1 {
+    font-size: 42px;
+    letter-spacing: 5px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    z-index: 1;
+    animation: bannerTextGlow 1s ease-in-out infinite alternate;
+}
+
+.bonus-unlock-banner.gold h1 {
+    color: #ffd700;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
+}
+
+.bonus-unlock-banner.purple h1 {
+    color: #bc13fe;
+    text-shadow: 0 0 30px rgba(188, 19, 254, 0.8), 0 0 60px rgba(188, 19, 254, 0.4);
+}
+
+@keyframes bannerTextGlow {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.3); }
+}
+
+.bonus-unlock-banner p {
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.7);
+    z-index: 1;
+}
+
+@keyframes bannerFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Free Points Badge */
+.free-points-badge {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    z-index: 100;
+    animation: badgeBounce 2s ease-in-out infinite;
+}
+
+.free-points-badge.gold {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #000;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.free-points-badge.purple {
+    background: linear-gradient(135deg, #bc13fe, #8a2be2);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(188, 19, 254, 0.5);
+}
+
+@keyframes badgeBounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-10px) rotate(3deg); }
+}
+
+/* Bonus Top Bar */
+.bonus-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.level-badge.gold .lv-num {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #000;
+}
+
+.level-badge.purple .lv-num {
+    background: linear-gradient(135deg, #bc13fe, #8a2be2);
+    color: #fff;
+}
+
+.bonus-timer-wrap {
+    display: flex;
+    align-items: center;
+}
+
+.bonus-timer {
+    font-family: 'Courier New', monospace;
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 3px;
+}
+
+/* Bonus Stats Bar */
+.bonus-stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 15px 30px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.bonus-stats-bar.gold {
+    background: rgba(255, 215, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.bonus-stats-bar.purple {
+    background: rgba(138, 43, 226, 0.1);
+    border-bottom: 1px solid rgba(138, 43, 226, 0.2);
+}
+
+.bonus-stats-bar strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Question Area */
+.bonus-question-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.bonus-question-card {
+    width: 100%;
+    max-width: 700px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+}
+
+.bonus-question-card.gold {
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
+}
+
+.bonus-question-card.purple {
+    border: 2px solid rgba(138, 43, 226, 0.4);
+    box-shadow: 0 0 30px rgba(138, 43, 226, 0.1);
+}
+
+.question-number {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 20px;
+}
+
+.question-text {
+    font-size: 22px;
+    color: #fff;
+    line-height: 1.6;
+    margin-bottom: 35px;
+}
+
+/* Answer Buttons */
+.bonus-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bonus-answer-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 25px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.bonus-answer-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.bonus-answer-btn .option-letter {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    font-weight: 900;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.gold-theme .bonus-answer-btn .option-letter {
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.purple-theme .bonus-answer-btn .option-letter {
+    background: rgba(138, 43, 226, 0.2);
+    color: #bc13fe;
+    border: 1px solid rgba(138, 43, 226, 0.4);
+}
+
+.bonus-answer-btn .option-text {
+    flex: 1;
+    color: #fff;
+    font-size: 16px;
+}
+
+/* Answer Button States */
+.bonus-answer-btn.correct {
+    background: rgba(0, 255, 136, 0.3) !important;
+    border-color: #00ff88 !important;
+    animation: correctPulse 0.5s ease;
+}
+
+.bonus-answer-btn.wrong {
+    background: rgba(100, 100, 100, 0.2) !important;
+    border-color: rgba(100, 100, 100, 0.4) !important;
+}
+
+@keyframes correctPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(0, 255, 136, 0); }
+    50% { box-shadow: 0 0 30px rgba(0, 255, 136, 0.5); }
+}
+
+/* Points Popup */
+.points-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: 900;
+    z-index: 200;
+    pointer-events: none;
+    animation: pointsFloat 0.8s ease forwards;
+}
+
+.points-popup.gold {
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+}
+
+.points-popup.purple {
+    color: #bc13fe;
+    text-shadow: 0 0 20px rgba(188, 19, 254, 0.8);
+}
+
+@keyframes pointsFloat {
+    0% { 
+        opacity: 0; 
+        transform: translate(-50%, -50%) scale(0.5); 
+    }
+    30% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1.2); 
+    }
+    100% { 
+        opacity: 0; 
+        transform: translate(-50%, -150%) scale(1); 
+    }
+}
+
+/* Level Complete Overlay */
+.bonus-complete-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.5s ease;
+}
+
+.bonus-complete-overlay.gold {
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, rgba(0, 0, 0, 0.95) 70%);
+}
+
+.bonus-complete-overlay.purple {
+    background: radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, rgba(0, 0, 0, 0.95) 70%);
+}
+
+.bonus-complete-content {
+    text-align: center;
+    position: relative;
+}
+
+.bonus-complete-content h1 {
+    font-size: 36px;
+    letter-spacing: 4px;
+    margin-bottom: 30px;
+}
+
+.bonus-complete-overlay.gold .bonus-complete-content h1 {
+    color: #ffd700;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+}
+
+.bonus-complete-overlay.purple .bonus-complete-content h1 {
+    color: #bc13fe;
+    text-shadow: 0 0 30px rgba(188, 19, 254, 0.6);
+}
+
+.bonus-stats-final {
+    font-size: 16px;
+    line-height: 2.2;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 30px;
+}
+
+.bonus-stats-final span {
+    color: #fff;
+    font-weight: 700;
+}
+
+.bonus-stats-final .points-earned {
+    font-size: 20px;
+    margin-top: 15px;
+}
+
+.bonus-complete-overlay.gold .points-earned span {
+    color: #ffd700;
+}
+
+.bonus-complete-overlay.purple .points-earned span {
+    color: #bc13fe;
+}
+
+.bonus-stats-final .total-score {
+    font-size: 24px;
+    margin-top: 10px;
+}
+
+.bonus-stats-final .total-score span {
+    color: #00ffff;
+    font-size: 28px;
+}
+
+.standby-msg {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+}
+
+.waiting-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* Star Particles Animation (placeholder) */
+.star-particles {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 200px;
+    pointer-events: none;
+}
+
+/* Mobile Responsive for Bonus Levels */
+@media (max-width: 768px) {
+    .bonus-unlock-banner h1 {
+        font-size: 24px;
+        padding: 0 20px;
+        text-align: center;
+    }
+
+    .bonus-unlock-banner p {
+        font-size: 12px;
+        padding: 0 20px;
+        text-align: center;
+    }
+
+    .free-points-badge {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        font-size: 10px;
+        padding: 8px 14px;
+    }
+
+    .bonus-topbar {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px 15px;
+    }
+
+    .bonus-timer {
+        font-size: 28px;
+    }
+
+    .bonus-stats-bar {
+        flex-wrap: wrap;
+        gap: 15px;
+        font-size: 11px;
+        padding: 12px 15px;
+    }
+
+    .bonus-question-card {
+        padding: 25px 20px;
+    }
+
+    .question-text {
+        font-size: 18px;
+    }
+
+    .bonus-answer-btn {
+        padding: 14px 18px;
+    }
+
+    .bonus-answer-btn .option-text {
+        font-size: 14px;
+    }
+
+    .bonus-complete-content h1 {
+        font-size: 24px;
     }
 }

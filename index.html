@@ -11,6 +11,7 @@
         href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=1.2">
+    <!-- Supabase Client -->
     <style>
         /* ============ ADMIN STYLES ============ */
         #screen-admin-login,
@@ -848,6 +849,434 @@
             color: rgba(255, 255, 255, 0.3);
             font-style: italic;
         }
+        /* ===== DYNAMIC ADMIN PANEL STYLES ===== */
+        
+        /* Live Stats Bar */
+        .live-stats-bar {
+            display: flex;
+            gap: 10px;
+            margin-right: 15px;
+        }
+        
+        .live-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 8px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        .live-stat-icon {
+            font-size: 11px;
+        }
+        
+        .live-stat-value.active {
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        .live-stat-value.idle {
+            color: #666;
+        }
+
+        /* Activity Log */
+        .activity-log-container {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 4px;
+            height: 180px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        
+        .activity-log {
+            height: 100%;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .activity-entry {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+            font-size: 11px;
+        }
+        
+        .activity-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-time {
+            color: #666;
+            font-family: 'Courier New', monospace;
+            min-width: 60px;
+        }
+        
+        .activity-message {
+            color: #fff;
+            flex: 1;
+        }
+
+        /* Animated Elements */
+        .stat-changed {
+            animation: statPulse 0.5s ease;
+            color: #00ff00 !important;
+        }
+        
+        .info-updated {
+            animation: infoPulse 0.3s ease;
+        }
+        
+        .phase-transition {
+            animation: phaseGlow 0.3s ease;
+        }
+
+        /* Player Status Indicators */
+        .player-online {
+            background: linear-gradient(90deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 255, 255, 0.02) 100%);
+            border-left: 2px solid #00ff00;
+        }
+        
+        .player-offline {
+            opacity: 0.7;
+        }
+        
+        .player-info-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+        }
+        
+        .player-activity {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 9px;
+            color: #666;
+        }
+        
+        .activity-status {
+            font-style: italic;
+            color: #00ffff;
+        }
+        
+        .join-time {
+            color: #999;
+        }
+        
+        .score-change {
+            font-size: 9px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+        
+        .score-positive {
+            color: #00ff00;
+        }
+        
+        .score-negative {
+            color: #ff4444;
+        }
+        
+        .score-animate {
+            animation: scoreChange 2s ease;
+        }
+
+        /* Enhanced empty state */
+        .empty-state.error {
+            color: #ff4444;
+            border: 1px dashed #ff4444;
+        }
+
+        /* Progress Indicators */
+        .question-progress-container {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .progress-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .progress-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff 0%, #0088ff 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .live-timer {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #00ffff;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .live-timer.urgent {
+            color: #ff4444;
+            animation: timerPulse 1s infinite;
+        }
+
+        /* Animations */
+        @keyframes statPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); text-shadow: 0 0 10px #00ff00; }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes infoPulse {
+            0% { background: rgba(0, 255, 255, 0.1); }
+            50% { background: rgba(0, 255, 255, 0.3); }
+            100% { background: rgba(0, 255, 255, 0.1); }
+        }
+        
+        @keyframes phaseGlow {
+            0% { box-shadow: 0 0 0 rgba(0, 255, 255, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.8); }
+            100% { box-shadow: 0 0 0 rgba(0, 255, 255, 0.5); }
+        }
+        
+        @keyframes scoreChange {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        
+        @keyframes timerPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes slideInRight {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Enhanced Control Buttons */
+        .ctrl-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+        }
+        
+        .ctrl-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* ===== SESSIONS TAB STYLES ===== */
+        .create-session-form {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .session-input {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #fff;
+            padding: 12px 15px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 12px;
+            flex: 1;
+        }
+        
+        .session-input:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+        
+        .session-input::placeholder {
+            color: #666;
+        }
+        
+        .create-session-btn {
+            background: linear-gradient(135deg, #00ffff, #0088cc);
+            border: none;
+            color: #000;
+            padding: 12px 20px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .create-session-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.4);
+        }
+        
+        .session-card {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .session-card.active {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.05);
+        }
+        
+        .session-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .session-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00ffff;
+        }
+        
+        .session-code {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .session-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        .session-participants {
+            color: #00ffff;
+        }
+        
+        .session-status {
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .session-status.waiting {
+            color: #ffaa00;
+        }
+        
+        .session-status.active {
+            color: #00ff00;
+        }
+        
+        .session-status.completed {
+            color: #666;
+        }
+        
+        .session-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .session-btn {
+            padding: 6px 12px;
+            border: 1px solid;
+            background: transparent;
+            color: inherit;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .session-btn.select {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+        
+        .session-btn.select:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .session-btn.delete {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        
+        .session-btn.delete:hover {
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        /* ===== ROOM SELECTION STYLES ===== */
+        .room-info {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 3px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .room-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .room-name-display {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00ffff;
+        }
+        
+        .room-participants-display {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        #room-code {
+            text-transform: uppercase;
+        }
+
     </style>
 </head>
 
@@ -931,6 +1360,17 @@
                         </div>
                     </div>
                     <div id="player-input-group" class="input-group hidden">
+                        <p class="input-label">"ENTER GAME SECTION CODE"</p>
+                        <input type="text" id="room-code" placeholder="6-CHARACTER CODE (e.g. ABC123)" maxlength="6" style="text-transform: uppercase;">
+                        <span id="room-code-error" class="error-msg hidden">INVALID OR NON-EXISTENT GAME SECTION</span>
+                        
+                        <div id="room-info" class="room-info hidden">
+                            <div class="room-details">
+                                <span id="room-name" class="room-name-display"></span>
+                                <span id="room-participants" class="room-participants-display"></span>
+                            </div>
+                        </div>
+                        
                         <p class="input-label">"ENTER YOUR PIRATE NAME"</p>
                         <input type="text" id="player-name" placeholder="CODENAME" maxlength="20">
                         <span id="name-error" class="error-msg hidden">NAME ALREADY TAKEN BY ANOTHER PIRATE</span>
@@ -994,6 +1434,7 @@
 
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="control">CONTROL</button>
+                <button class="admin-tab-btn" data-tab="sessions">SESSIONS</button>
                 <button class="admin-tab-btn" data-tab="players">PLAYERS</button>
                 <button class="admin-tab-btn" data-tab="leaderboard">LEADERBOARD</button>
             </div>
@@ -1064,7 +1505,27 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: PLAYERS -->
+                <!-- TAB 2: SESSIONS -->
+                <div id="tab-sessions" class="admin-tab-content">
+                    <div class="admin-section-label">CREATE NEW GAME SECTION</div>
+                    <div class="create-session-form">
+                        <div class="form-row">
+                            <input type="text" id="session-name" class="session-input" placeholder="Workshop Name (e.g., CS101 Lab)"/>
+                            <input type="text" id="session-description" class="session-input" placeholder="Description (optional)"/>
+                        </div>
+                        <div class="form-row">
+                            <input type="number" id="session-max-participants" class="session-input" placeholder="Max Participants" value="50" min="1" max="200"/>
+                            <button id="btn-create-session" class="create-session-btn">CREATE SECTION</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section-label">ACTIVE GAME SECTIONS</div>
+                    <div id="admin-sessions-list">
+                        <!-- Session cards injected here -->
+                    </div>
+                </div>
+
+                <!-- TAB 3: PLAYERS -->
                 <div id="tab-players" class="admin-tab-content">
                     <div class="admin-section-label">ADD NEW CREW MEMBER</div>
                     <div class="add-player-row">
@@ -1096,6 +1557,7 @@
                 <span class="pulse-dot"></span>
                 <span id="lobby-status-text">WAITING FOR ADMIN TO START THE BATTLE...</span>
             </div>
+            <div id="lobby-room-info" class="room-info-container"></div>
             <div class="lobby-info">
                 <span id="participant-count-badge" class="glass">UNITS DETECTED: 0</span>
             </div>
@@ -1254,11 +1716,140 @@ TypeError: unexpected result — check your logic</pre>
                 </div>
             </div>
         </section>
+
+        <!-- Level 2 Screen - Bonus Round -->
+        <section id="screen-level-two" class="screen bonus-level gold-theme">
+            <!-- Unlock Banner (shown briefly) -->
+            <div id="l2-unlock-banner" class="bonus-unlock-banner gold">
+                <div class="banner-glow"></div>
+                <h1>BONUS ROUND UNLOCKED</h1>
+                <p>EASY POINTS — ANSWER AS MANY AS YOU CAN</p>
+            </div>
+
+            <!-- Floating Badge -->
+            <div class="free-points-badge gold">FREE POINTS ZONE</div>
+
+            <!-- Top Bar -->
+            <div class="bonus-topbar">
+                <div class="level-badge gold">
+                    <span class="lv-num">LV.2</span>
+                    <span class="lv-name">BONUS ROUND</span>
+                </div>
+                <div class="bonus-timer-wrap">
+                    <div id="l2-timer" class="bonus-timer">08:00</div>
+                </div>
+                <div class="level-player-info">
+                    <span id="l2-score">0 PTS</span>
+                    <span id="l2-codename">AGENT</span>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="bonus-stats-bar gold">
+                <span>QUESTIONS ANSWERED: <strong id="l2-answered">0</strong></span>
+                <span>CORRECT: <strong id="l2-correct">0</strong></span>
+                <span>POINTS THIS ROUND: <strong id="l2-round-pts">0</strong></span>
+            </div>
+
+            <!-- Question Area -->
+            <div class="bonus-question-area">
+                <div class="bonus-question-card gold">
+                    <div class="question-number" id="l2-q-num">QUESTION 1</div>
+                    <div class="question-text" id="l2-q-text">Loading question...</div>
+                    <div class="bonus-answers" id="l2-answers">
+                        <!-- Answer buttons inserted by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points Popup -->
+            <div id="l2-points-popup" class="points-popup gold" style="display:none;">+10</div>
+
+            <!-- Level Complete Overlay -->
+            <div id="l2-complete-overlay" class="bonus-complete-overlay gold" style="display:none;">
+                <div class="bonus-complete-content">
+                    <div class="star-particles"></div>
+                    <h1>BONUS ROUND COMPLETE</h1>
+                    <div class="bonus-stats-final">
+                        <div>Questions Answered: <span id="l2-final-answered">0</span></div>
+                        <div>Correct Answers: <span id="l2-final-correct">0</span></div>
+                        <div class="points-earned">Points Earned: <span id="l2-final-pts">0</span></div>
+                        <div class="total-score">Total Score: <span id="l2-total-score">0</span></div>
+                    </div>
+                    <p class="standby-msg">STANDBY FOR NEXT LEVEL</p>
+                    <div class="waiting-indicator"><span class="pulse-dot"></span> Waiting for admin...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 4 Screen - Bonus Round 2 -->
+        <section id="screen-level-four" class="screen bonus-level purple-theme">
+            <!-- Unlock Banner (shown briefly) -->
+            <div id="l4-unlock-banner" class="bonus-unlock-banner purple">
+                <div class="banner-glow"></div>
+                <h1>BONUS ROUND 2 UNLOCKED</h1>
+                <p>SECOND CHANCE — GRAB MORE POINTS</p>
+            </div>
+
+            <!-- Floating Badge -->
+            <div class="free-points-badge purple">FREE POINTS ZONE</div>
+
+            <!-- Top Bar -->
+            <div class="bonus-topbar">
+                <div class="level-badge purple">
+                    <span class="lv-num">LV.4</span>
+                    <span class="lv-name">BONUS ROUND 2</span>
+                </div>
+                <div class="bonus-timer-wrap">
+                    <div id="l4-timer" class="bonus-timer">08:00</div>
+                </div>
+                <div class="level-player-info">
+                    <span id="l4-score">0 PTS</span>
+                    <span id="l4-codename">AGENT</span>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="bonus-stats-bar purple">
+                <span>QUESTIONS ANSWERED: <strong id="l4-answered">0</strong></span>
+                <span>CORRECT: <strong id="l4-correct">0</strong></span>
+                <span>POINTS THIS ROUND: <strong id="l4-round-pts">0</strong></span>
+            </div>
+
+            <!-- Question Area -->
+            <div class="bonus-question-area">
+                <div class="bonus-question-card purple">
+                    <div class="question-number" id="l4-q-num">QUESTION 1</div>
+                    <div class="question-text" id="l4-q-text">Loading question...</div>
+                    <div class="bonus-answers" id="l4-answers">
+                        <!-- Answer buttons inserted by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points Popup -->
+            <div id="l4-points-popup" class="points-popup purple" style="display:none;">+10</div>
+
+            <!-- Level Complete Overlay -->
+            <div id="l4-complete-overlay" class="bonus-complete-overlay purple" style="display:none;">
+                <div class="bonus-complete-content">
+                    <div class="star-particles"></div>
+                    <h1>BONUS ROUND 2 COMPLETE</h1>
+                    <div class="bonus-stats-final">
+                        <div>Questions Answered: <span id="l4-final-answered">0</span></div>
+                        <div>Correct Answers: <span id="l4-final-correct">0</span></div>
+                        <div class="points-earned">Points Earned: <span id="l4-final-pts">0</span></div>
+                        <div class="total-score">Total Score: <span id="l4-total-score">0</span></div>
+                    </div>
+                    <p class="standby-msg">STANDBY FOR FINAL BOSS</p>
+                    <div class="waiting-indicator"><span class="pulse-dot"></span> Waiting for admin...</div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer
-        onerror="console.warn('Supabase CDN failed to load')"></script>
-    <script src="script.js?v=2.3" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2" crossorigin></script>
+    <script src="script.js?v=2.4"></script>
 
 </body>
 

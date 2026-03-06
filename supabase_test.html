@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Integration Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>BELMONTS: Supabase Connection Test</h1>
+    
+    <div id="status">Testing connection...</div>
+    <div style="margin: 10px 0;">
+        <strong>Project URL:</strong> https://loosnbpmmjrwnfwkqxs.supabase.co
+    </div>
+    
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="testTables()">Test Tables</button>
+    <button onclick="viewData()">View Game Data</button>
+    <button onclick="clearData()">Clear All Data</button>
+    
+    <div id="output" style="margin-top: 20px; background: #f0f0f0; padding: 10px;"></div>
+    
+    <script>
+        const SUPABASE_URL = 'https://loosnbpmmjrwnfwkqxs.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxvb3VzbmJwbW1qcnduZndrcXhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzEzMjksImV4cCI6MjA4ODE0NzMyOX0.DtM-AStgzVXPZNJWer4SYof4ZCfWheneI0oCuz_k6XI';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        async function testTables() {
+            const output = document.getElementById('output');
+            const status = document.getElementById('status');
+            
+            try {
+                // Test each table existence
+                const tables = ['game_sessions', 'players', 'player_scores', 'game_events'];
+                let results = '<h3>Database Schema Test:</h3>';
+                
+                for (const table of tables) {
+                    try {
+                        const { error } = await supabase.from(table).select('*').limit(1);
+                        if (error) {
+                            results += `❌ ${table}: ${error.message}<br>`;
+                        } else {
+                            results += `✅ ${table}: Table exists<br>`;
+                        }
+                    } catch (err) {
+                        results += `❌ ${table}: ${err.message}<br>`;
+                    }
+                }
+                
+                results += '<br><strong>If you see errors above, you need to run the migration:</strong><br>';
+                results += '1. Go to your Supabase Dashboard → SQL Editor<br>';
+                results += '2. Copy/paste content from supabase_migration.sql<br>';
+                results += '3. Click RUN<br>';
+                
+                output.innerHTML = results;
+                status.textContent = '📋 Schema test completed';
+            } catch (err) {
+                output.innerHTML = `<strong>Error:</strong> ${err.message}`;
+                status.textContent = '❌ Schema test failed';
+            }
+        }
+        
+        async function testConnection() {
+            const output = document.getElementById('output');
+            const status = document.getElementById('status');
+            
+            try {
+                // Test basic connection
+                const { data, error } = await supabase
+                    .from('game_sessions')
+                    .select('*')
+                    .limit(1);
+                
+                if (error) {
+                    status.textContent = '❌ Connection failed';
+                    output.innerHTML = `<strong>Error:</strong> ${error.message}`;
+                } else {
+                    status.textContent = '✅ Connected to Supabase';
+                    output.innerHTML = `<strong>Success!</strong> Found ${data.length} game session(s)`;
+                }
+            } catch (err) {
+                status.textContent = '❌ Connection error';
+                output.innerHTML = `<strong>Error:</strong> ${err.message}`;
+            }
+        }
+        
+        async function viewData() {
+            const output = document.getElementById('output');
+            
+            try {
+                // Get all data from tables
+                const [sessions, players, scores] = await Promise.all([
+                    supabase.from('game_sessions').select('*'),
+                    supabase.from('players').select('*'),
+                    supabase.from('player_scores').select('*')
+                ]);
+                
+                let html = '<h3>Database Contents:</h3>';
+                
+                html += `<h4>Game Sessions (${sessions.data?.length || 0})</h4>`;
+                html += '<pre>' + JSON.stringify(sessions.data, null, 2) + '</pre>';
+                
+                html += `<h4>Players (${players.data?.length || 0})</h4>`;
+                html += '<pre>' + JSON.stringify(players.data, null, 2) + '</pre>';
+                
+                html += `<h4>Player Scores (${scores.data?.length || 0})</h4>`;
+                html += '<pre>' + JSON.stringify(scores.data, null, 2) + '</pre>';
+                
+                output.innerHTML = html;
+            } catch (err) {
+                output.innerHTML = `<strong>Error:</strong> ${err.message}`;
+            }
+        }
+        
+        async function clearData() {
+            if (!confirm('Are you sure you want to clear ALL game data?')) return;
+            
+            const output = document.getElementById('output');
+            
+            try {
+                // Clear all tables (except keep default game session)
+                await supabase.from('player_scores').delete().neq('id', 'never_match');
+                await supabase.from('players').delete().neq('id', 'never_match');
+                await supabase.from('game_sessions').delete().neq('session_id', 'default');
+                
+                output.innerHTML = '<strong>Success!</strong> All data cleared except default session.';
+            } catch (err) {
+                output.innerHTML = `<strong>Error:</strong> ${err.message}`;
+            }
+        }
+        
+        // Test connection on load
+        testConnection();
+    </script>
+</body>
+</html>
