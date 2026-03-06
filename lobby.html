@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby - Game Belmonts</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="lobby-container">
+        <h1>Lobby</h1>
+        <div class="players-info">
+            <span id="players-count">Players Joined: 0 / 60</span>
+        </div>
+        <ul id="players-list" class="players-list">
+            <!-- Player codenames will be listed here -->
+        </ul>
+        <div class="waiting-message">
+            Waiting for Admin to start the battle...
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
