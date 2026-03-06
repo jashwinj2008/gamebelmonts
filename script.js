@@ -181,7 +181,24 @@ function initNavigation() {
         const id = target.id;
         ArenaLog.info("CLICK DETECTED ON: " + (id || target.className || target.tagName));
 
-        // Removed admin role selection logic
+        // Admin Role Selection
+        if (id === 'role-admin' || target.closest('#role-admin')) {
+            ArenaLog.info("ADMIN ROLE SELECTED");
+            showScreen('admin-login-screen');
+        }
+
+        // Admin Login
+        if (id === 'login-btn') {
+            const pwd = getEl('admin-password').value;
+            if (pwd === '9500') {
+                showScreen('admin-panel-screen');
+            } else {
+                getEl('admin-login-frame').classList.add('wrong-auth');
+                setTimeout(() => getEl('admin-login-frame').classList.remove('wrong-auth'), 500);
+            }
+        }
+        if (id === 'cancel-admin') showScreen('home-screen');
+
         if (id === 'role-participant' || target.closest('#role-participant')) {
             ArenaLog.info("PARTICIPANT ROLE SELECTED");
             var roleSelection = getEl('role-selection');
@@ -195,7 +212,19 @@ function initNavigation() {
             if (playerInput2) playerInput2.classList.add('hidden');
             if (roleSelection2) roleSelection2.classList.remove('hidden');
         }
-        // Removed admin login logic
+
+        // Game Controls
+        if (id === 'ctrl-start') SyncManager.updateGameState({ phase: 'playing' });
+        if (id === 'ctrl-pause') SyncManager.updateGameState({ phase: 'paused' });
+        if (id === 'ctrl-restart') SyncManager.updateGameState({ question_index: 0 });
+        if (id === 'ctrl-skip') SyncManager.updateGameState({ current_level: state.global.currentLevel + 1, question_index: 0 });
+        if (id === 'ctrl-end') SyncManager.updateGameState({ phase: 'lobby' });
+
+        if (target.classList.contains('level-card')) {
+            const lvl = target.dataset.level;
+            SyncManager.updateGameState({ current_level: parseInt(lvl), phase: 'playing', question_index: 0 });
+        }
+
         if (id === 'start-battle') {
             const nameInput = getEl('player-name');
             const n = nameInput ? nameInput.value.trim() : '';
@@ -211,7 +240,6 @@ function initNavigation() {
         if (id === 'force-enter-btn') {
             forceRevealArena();
         }
-        // Removed admin panel tab, level, and command logic
         if (id === 'play-again') showScreen('home-screen');
     });
 }
