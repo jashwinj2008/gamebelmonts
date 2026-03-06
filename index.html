@@ -11,6 +11,756 @@
         href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=1.2">
+    <style>
+        /* ============ ADMIN STYLES ============ */
+        #screen-admin-login,
+        #screen-admin-panel {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #020b14 0%, #0a1628 60%, #0d1f3c 100%);
+            font-family: 'Orbitron', 'Courier New', monospace;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        #screen-admin-login::before,
+        #screen-admin-panel::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 255, 0.015) 2px,
+                    rgba(0, 255, 255, 0.015) 4px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .admin-login-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .admin-login-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 48px 40px;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.08),
+                inset 0 0 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .admin-login-card::before,
+        .admin-login-card::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: #00ffff;
+            border-style: solid;
+        }
+
+        .admin-login-card::before {
+            top: -2px;
+            left: -2px;
+            border-width: 2px 0 0 2px;
+        }
+
+        .admin-login-card::after {
+            bottom: -2px;
+            right: -2px;
+            border-width: 0 2px 2px 0;
+        }
+
+        .admin-login-tag {
+            display: inline-block;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            font-size: 10px;
+            letter-spacing: 3px;
+            padding: 4px 12px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+        }
+
+        .admin-login-icon {
+            font-size: 52px;
+            margin-bottom: 12px;
+            display: block;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+
+        .admin-login-title {
+            font-size: clamp(22px, 5vw, 32px);
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #fff;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .admin-login-title span {
+            color: #00ffff;
+        }
+
+        .admin-login-sub {
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 12px;
+            letter-spacing: 2px;
+            margin-bottom: 32px;
+        }
+
+        .admin-pw-input {
+            width: 100%;
+            background: rgba(0, 255, 255, 0.04);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 2px;
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            letter-spacing: 6px;
+            padding: 14px 20px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .admin-pw-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .admin-pw-input::placeholder {
+            color: rgba(0, 255, 255, 0.25);
+            letter-spacing: 2px;
+            font-size: 13px;
+        }
+
+        .admin-error-msg {
+            color: #ff4444;
+            font-size: 12px;
+            letter-spacing: 2px;
+            height: 20px;
+            margin-bottom: 16px;
+        }
+
+        .admin-login-btn {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            padding: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.15), transparent);
+            transition: left 0.4s;
+        }
+
+        .admin-login-btn:hover {
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .admin-login-btn:hover::before {
+            left: 100%;
+        }
+
+        .admin-hint {
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 11px;
+            letter-spacing: 2px;
+        }
+
+        .admin-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .admin-back-btn {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.5);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 13px;
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+
+        .admin-back-btn:hover {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+        .admin-panel-title {
+            font-size: clamp(14px, 3vw, 20px);
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .admin-panel-title span {
+            color: #00ffff;
+        }
+
+        .admin-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 2px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            border: 1px solid;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .admin-status-badge.live {
+            color: #00ff88;
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.08);
+        }
+
+        .admin-status-badge.standby {
+            color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .admin-status-badge.show-answer {
+            color: #f59e0b;
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .admin-status-badge.results {
+            color: #a855f7;
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.08);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulseDot 1.5s ease-in-out infinite;
+        }
+
+        .admin-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 2px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .admin-stat-chip span {
+            color: #00ffff;
+            font-weight: 700;
+        }
+
+        .admin-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 57px;
+            z-index: 99;
+        }
+
+        .admin-tab-btn {
+            padding: 14px 24px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: rgba(255, 255, 255, 0.35);
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-tab-btn:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .admin-tab-btn.active {
+            color: #00ffff;
+            border-bottom-color: #00ffff;
+            background: rgba(0, 255, 255, 0.04);
+        }
+
+        .admin-panel-body {
+            padding: 28px 24px;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .admin-tab-content {
+            display: none;
+        }
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+        .admin-section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 255, 0.06);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            font-size: 10px;
+            letter-spacing: 3px;
+            padding: 4px 12px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+
+        .level-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .level-card {
+            flex: 1;
+            min-width: 140px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 16px 14px;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .level-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--lc);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .level-card:hover::after,
+        .level-card.active::after {
+            transform: scaleX(1);
+        }
+
+        .level-card:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-3px);
+        }
+
+        .level-card.active {
+            border-color: var(--lc);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .level-card-icon {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+
+        .level-card-num {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--lc);
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .level-card-name {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .ctrl-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 20px;
+            border-radius: 4px;
+            border: 1px solid;
+            background: transparent;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .ctrl-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .ctrl-btn:not(:disabled):hover {
+            transform: translateY(-3px);
+        }
+
+        .ctrl-btn.start {
+            color: #00ff88;
+            border-color: #00ff88;
+        }
+
+        .ctrl-btn.show-ans {
+            color: #f59e0b;
+            border-color: #f59e0b;
+        }
+
+        .ctrl-btn.next-q {
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .ctrl-btn.stop {
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .ctrl-btn.reset {
+            color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.15);
+            font-size: 11px;
+        }
+
+        .ctrl-btn.start:not(:disabled):hover {
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2);
+        }
+
+        .ctrl-btn.show-ans:not(:disabled):hover {
+            background: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);
+        }
+
+        .ctrl-btn.next-q:not(:disabled):hover {
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+        }
+
+        .ctrl-btn.stop:not(:disabled):hover {
+            background: rgba(239, 68, 68, 0.1);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Leaderboard & Players */
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            animation: fadeUp 0.4s ease-out both;
+        }
+
+        .player-idx {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+            font-weight: 700;
+            width: 30px;
+        }
+
+        .player-name-cell {
+            flex: 1;
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .player-score-cell {
+            color: #00ffff;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .kick-btn {
+            background: none;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 4px 10px;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .kick-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+
+        .lb-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            margin-bottom: 12px;
+            animation: slideRight 0.5s ease-out both;
+        }
+
+        .lb-rank {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .lb-rank.r1 {
+            background: #f59e0b;
+            color: #000;
+        }
+
+        .lb-rank.r2 {
+            background: #94a3b8;
+            color: #000;
+        }
+
+        .lb-rank.r3 {
+            background: #b45309;
+            color: #000;
+        }
+
+        .lb-rank.rn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .lb-name {
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .lb-bar-wrap {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .lb-bar {
+            height: 100%;
+            transition: width 1s ease-out;
+        }
+
+        .lb-bar.r1 {
+            background: #f59e0b;
+        }
+
+        .lb-bar.r2 {
+            background: #94a3b8;
+        }
+
+        .lb-bar.r3 {
+            background: #b45309;
+        }
+
+        .lb-bar.rn {
+            background: #00ffff;
+        }
+
+        .lb-score {
+            font-size: 20px;
+            font-weight: 900;
+            color: #fff;
+            text-align: right;
+        }
+
+        .lb-score-label {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 1px;
+            text-align: right;
+        }
+
+        .belmonts-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 12px 24px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            z-index: 9999;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes floatIcon {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+
+        @keyframes pulseDot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: translateX(-50%) scale(0.7);
+                opacity: 0;
+            }
+
+            60% {
+                transform: translateX(-50%) scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-50%) scale(1);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideRight {
+            from {
+                opacity: 0;
+                transform: translateX(-24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -126,6 +876,100 @@
                     <button id="cancel-admin" class="text-link">ABORT</button>
                 </div>
             </div>
+        </section>
+
+        <!-- NEW ADMIN LOGIN SCREEN -->
+        <section id="screen-admin-login" class="screen" style="display:none;">
+            <div class="admin-login-wrap">
+                <div class="admin-login-card">
+                    <span class="admin-login-tag">KERNEL ACCESS</span>
+                    <span class="admin-login-icon">🔐</span>
+                    <h2 class="admin-login-title">BELMONTS <span>SYSTEMS</span></h2>
+                    <p class="admin-login-sub">AUTHORIZED PERSONNEL ONLY</p>
+                    <input type="password" id="admin-pw-input" class="admin-pw-input" placeholder="ENTER ACCESS CODE">
+                    <div id="admin-error-msg" class="admin-error-msg"></div>
+                    <button class="admin-login-btn">VERIFY IDENTITY</button>
+                    <p class="admin-hint">HINT: THE PASSWORD IS "BELMONTS"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW ADMIN PANEL SCREEN -->
+        <section id="screen-admin-panel" class="screen" style="display:none;">
+            <div class="admin-topbar">
+                <div class="admin-topbar-left">
+                    <button class="admin-back-btn" onclick="showScreen('home-screen')">EXIT</button>
+                    <h2 class="admin-panel-title">BELMONTS <span>ARENA</span></h2>
+                </div>
+                <div id="admin-status-badge" class="admin-status-badge standby">
+                    <span class="status-dot"></span>
+                    <span id="admin-status-text">STANDBY</span>
+                </div>
+                <div class="admin-topbar-right">
+                    <div class="admin-stat-chip">UNITS: <span id="ap-player-count">0</span></div>
+                    <div class="admin-stat-chip">LEVEL: <span id="ap-level-display">1</span></div>
+                    <div class="admin-stat-chip">TASK: <span id="ap-q-display">1</span></div>
+                </div>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active"
+                    onclick="switchAdminTab('admin-tab-control', this)">CONTROL</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('admin-tab-players', this)">PLAYERS</button>
+                <button class="admin-tab-btn"
+                    onclick="switchAdminTab('admin-tab-leaderboard', this)">LEADERBOARD</button>
+            </div>
+
+            <main class="admin-panel-body">
+                <div id="admin-tab-control" class="admin-tab-content active">
+                    <span class="admin-section-label">ARENA OVERRIDE</span>
+                    <div class="level-grid">
+                        <!-- Filled by JS -->
+                    </div>
+
+                    <span class="admin-section-label">BATTLE COMMANDS</span>
+                    <div class="control-grid">
+                        <button class="ctrl-btn start" onclick="adminStartLevel()">▶ START LEVEL</button>
+                        <button class="ctrl-btn show-ans" onclick="adminShowAnswer()">📢 REVEAL ANSWER</button>
+                        <button class="ctrl-btn next-q" onclick="adminNextQuestion()">➡ NEXT PHASE</button>
+                        <button class="ctrl-btn stop" onclick="adminStopLevel()">⏹ HALT ARENA</button>
+                        <button class="ctrl-btn reset" onclick="adminResetGame()">🔄 SYSTEM RESET</button>
+                    </div>
+
+                    <div id="admin-info-panel"
+                        style="margin-top:20px; color:rgba(255,255,255,0.4); font-size:11px; letter-spacing:1px; line-height:1.8;">
+                        <div
+                            style="background:rgba(255,255,255,0.03); padding:15px; border-radius:4px; border:1px solid rgba(255,255,255,0.05);">
+                            <div>ACTIVE LEVEL: <span id="info-level-name" style="color:#00ffff;">-</span></div>
+                            <div>PHASE PROGRESS: <span id="info-q-num" style="color:#00ffff;">-</span></div>
+                            <div>UNITS IN FIELD: <span id="info-player-count" style="color:#00ffff;">-</span></div>
+                            <div>CURRENT STATUS: <span id="info-phase" style="color:#00ffff;">-</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="admin-tab-players" class="admin-tab-content">
+                    <span class="admin-section-label">UNIT REGISTRATION</span>
+                    <div style="display:flex; gap:10px; margin-bottom:28px;">
+                        <input type="text" id="admin-add-player-input" class="admin-pw-input" placeholder="CODENAME"
+                            style="text-align:left; letter-spacing:2px; font-size:13px; margin:0;">
+                        <button class="admin-login-btn" onclick="adminAddPlayer()" style="width:140px; padding:0;">ADD
+                            UNIT</button>
+                    </div>
+
+                    <span class="admin-section-label">ARENA ROSTER <span id="roster-count-label"></span></span>
+                    <div id="admin-player-roster">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <div id="admin-tab-leaderboard" class="admin-tab-content">
+                    <span class="admin-section-label">SYNCHRONIZATION RANKINGS</span>
+                    <div id="admin-leaderboard-list">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </main>
         </section>
         <!-- Admin Dashboard Screen (Hidden by default) -->
         <section id="admin-panel-screen" class="screen">
