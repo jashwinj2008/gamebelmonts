@@ -383,7 +383,148 @@ function initNavigation() {
             }
         };
     }
+
+    // Participant flow - back to roles button
+    const backToRolesBtn = document.getElementById('back-to-roles');
+    if (backToRolesBtn) {
+        backToRolesBtn.onclick = () => {
+            const rs = document.getElementById('role-selection');
+            const pi = document.getElementById('player-input-group');
+            if (rs) rs.classList.remove('hidden');
+            if (pi) pi.classList.add('hidden');
+        };
+    }
+
+    // Participant flow - join battle
+    const startBattleBtn = document.getElementById('start-battle');
+    const playerNameInput = document.getElementById('player-name');
+    const nameError = document.getElementById('name-error');
+
+    if (startBattleBtn && playerNameInput) {
+        startBattleBtn.onclick = () => {
+            const name = playerNameInput.value.trim().toUpperCase();
+            
+            if (!name || name.length < 2) {
+                if (nameError) {
+                    nameError.textContent = 'NAME MUST BE AT LEAST 2 CHARACTERS';
+                    nameError.classList.remove('hidden');
+                }
+                return;
+            }
+
+            // Check if name already exists
+            const players = Storage.getPlayers();
+            const nameExists = players.some(p => p.name.toUpperCase() === name);
+            
+            if (nameExists) {
+                if (nameError) {
+                    nameError.textContent = 'NAME ALREADY TAKEN BY ANOTHER PIRATE';
+                    nameError.classList.remove('hidden');
+                }
+                return;
+            }
+
+            // Hide error
+            if (nameError) nameError.classList.add('hidden');
+
+            // Add player
+            const newPlayer = {
+                id: 'player-' + Date.now(),
+                name: name,
+                score: 0,
+                joinedAt: Date.now()
+            };
+            players.push(newPlayer);
+            Storage.savePlayers(players);
+
+            // Store current player info
+            localStorage.setItem('currentPlayer', JSON.stringify(newPlayer));
+
+            // Show lobby
+            showScreen('lobby-screen');
+            ParticipantLobby.init();
+
+            Toast.show(`Welcome, ${name}!`, 'success');
+        };
+
+        // Enter key to submit
+        playerNameInput.onkeydown = (e) => {
+            if (e.key === 'Enter') startBattleBtn.click();
+        };
+    }
 }
+
+// ============ PARTICIPANT LOBBY ============
+const ParticipantLobby = {
+    pollingInterval: null,
+    currentPlayer: null,
+
+    init() {
+        this.currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
+        this.renderPlayerList();
+        this.startPolling();
+        this.checkGameState();
+    },
+
+    startPolling() {
+        // Clear existing interval
+        if (this.pollingInterval) clearInterval(this.pollingInterval);
+
+        // Poll every 2 seconds for updates
+        this.pollingInterval = setInterval(() => {
+            this.renderPlayerList();
+            this.checkGameState();
+        }, 2000);
+    },
+
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
+        }
+    },
+
+    renderPlayerList() {
+        const players = Storage.getPlayers();
+        const listEl = document.getElementById('player-list');
+        const countBadge = document.getElementById('participant-count-badge');
+
+        if (countBadge) {
+            countBadge.textContent = `UNITS DETECTED: ${players.length}`;
+        }
+
+        if (!listEl) return;
+
+        if (players.length === 0) {
+            listEl.innerHTML = '<div class="empty-state">Waiting for players to join...</div>';
+            return;
+        }
+
+        listEl.innerHTML = players.map((p, idx) => {
+            const isCurrentPlayer = this.currentPlayer && p.id === this.currentPlayer.id;
+            return `
+                <div class="player-row ${isCurrentPlayer ? 'current-player' : ''}" style="animation-delay: ${idx * 0.05}s">
+                    <span class="player-idx">#${(idx + 1).toString().padStart(2, '0')}</span>
+                    <span class="player-name">${p.name}${isCurrentPlayer ? ' (YOU)' : ''}</span>
+                    <span class="player-score">${p.score} PTS</span>
+                </div>
+            `;
+        }).join('');
+    },
+
+    checkGameState() {
+        const state = Storage.getGameState();
+
+        // If admin started Level 1, switch to level screen
+        if (state.phase === 'level1') {
+            this.stopPolling();
+            Level1.startLevel();
+        }
+    }
+};
+
+// Expose globally
+window.ParticipantLobby = ParticipantLobby;
 
 // Global expose
 window.AdminController = AdminController;

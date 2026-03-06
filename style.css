@@ -1237,6 +1237,112 @@ select.admin-input option {
     width: 100%;
 }
 
+/* Lobby Player Row */
+.player-row {
+    display: grid;
+    grid-template-columns: 50px 1fr 100px;
+    padding: 1rem;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    animation: fadeIn 0.3s ease-out backwards;
+    transition: all 0.2s ease;
+}
+
+.player-row:hover {
+    background: rgba(0, 242, 255, 0.05);
+}
+
+.player-row.current-player {
+    background: rgba(0, 242, 255, 0.1);
+    border-left: 3px solid var(--neon-blue);
+}
+
+.player-row .player-idx {
+    color: rgba(255, 255, 255, 0.4);
+    font-family: var(--font-orbitron);
+    font-size: 0.8rem;
+}
+
+.player-row .player-name {
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+.player-row.current-player .player-name {
+    color: var(--neon-blue);
+}
+
+.player-row .player-score {
+    color: var(--neon-blue);
+    font-family: var(--font-orbitron);
+    text-align: right;
+    font-size: 0.9rem;
+}
+
+.player-grid-list .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    letter-spacing: 1px;
+}
+
+#lobby-screen {
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+#lobby-screen .section-title {
+    margin-bottom: 1rem;
+}
+
+#lobby-screen .lobby-container {
+    max-width: 700px;
+    width: 100%;
+}
+
+.lobby-status-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: rgba(0, 242, 255, 0.1);
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    color: var(--neon-blue);
+    font-family: var(--font-orbitron);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.lobby-status-banner .pulse-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--neon-blue);
+    border-radius: 50%;
+    animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { 
+        box-shadow: 0 0 5px var(--neon-blue);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 15px var(--neon-blue);
+        transform: scale(1.2);
+    }
+}
+
 .player-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
