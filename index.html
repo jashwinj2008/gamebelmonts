@@ -2322,14 +2322,134 @@ TypeError: unexpected result — check your logic</pre>
             </div>
         </section>
 
-        <!-- Level 5 Screen (Placeholder) -->
-        <section id="screen-level-five" class="screen placeholder-level">
-            <div class="placeholder-content">
-                <h1>LEVEL 5 (COMING SOON)</h1>
-                <p>Final boss coming soon. Thanks for playing!</p>
-                <p class="small">Please ask the admin to select another level.</p>
+        <!-- Level 5 Screen - Tech Escape Room -->
+        <section id="screen-level-five" class="screen l5-screen">
+
+            <!-- Dramatic Intro Overlay -->
+            <div id="l5-intro-overlay" class="l5-intro-overlay">
+                <div class="l5-intro-content">
+                    <div id="l5-intro-boss" class="l5-intro-boss" style="opacity:0;">FINAL BOSS</div>
+                    <div id="l5-intro-title" class="l5-intro-title" style="opacity:0;">TECH ESCAPE ROOM</div>
+                    <div id="l5-intro-sub1" class="l5-intro-sub" style="opacity:0;">3 LOCKS STAND BETWEEN YOU AND FREEDOM</div>
+                    <div id="l5-intro-sub2" class="l5-intro-sub" style="opacity:0;">CRACK THEM ALL BEFORE TIME RUNS OUT</div>
+                    <div id="l5-intro-count" class="l5-intro-count" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- Escape Announcement Overlay (shown to other players) -->
+            <div id="l5-escape-announcement" class="l5-escape-announcement" style="display:none;">
+                <div class="l5-escape-ann-inner">
+                    <div class="l5-escape-ann-text">⚡ UNIT <span id="l5-escaped-player-name">AGENT</span> HAS ESCAPED THE VAULT ⚡</div>
+                </div>
+            </div>
+
+            <!-- Full Escape Sequence Overlay (escaping player) -->
+            <div id="l5-escaped-overlay" class="l5-escaped-overlay" style="display:none;">
+                <div class="l5-green-explosion"></div>
+                <div class="l5-escaped-content">
+                    <div class="l5-escaped-title">YOU ESCAPED THE VAULT</div>
+                    <div class="l5-escaped-name" id="l5-escaped-codename">AGENT</div>
+                    <div class="l5-escaped-stats">
+                        <div>LEVEL POINTS: <span class="l5-gold" id="l5-escaped-pts">0</span></div>
+                        <div>CUMULATIVE SCORE: <span class="l5-cyan" id="l5-escaped-total">0</span></div>
+                        <div id="l5-race-bonus-display" style="display:none;">RACE BONUS: <span class="l5-gold" id="l5-race-bonus-pts">+0</span></div>
+                    </div>
+                    <div class="waiting-indicator" style="margin-top:30px;"><span class="pulse-dot"></span> Waiting for admin...</div>
+                </div>
+            </div>
+
+            <!-- Level Complete Overlay (timer ran out) -->
+            <div id="l5-complete-overlay" class="l5-complete-overlay" style="display:none;">
+                <div class="l5-complete-inner">
+                    <h1 class="l5-complete-title">TECH ESCAPE ROOM COMPLETE</h1>
+                    <div class="l5-complete-status" id="l5-complete-status">ESCAPED</div>
+                    <div class="l5-lock-breakdown">
+                        <div class="l5-lock-row">Lock 1 — Code Breaker: <span id="l5-fin-lock1">0</span> / 150 pts</div>
+                        <div class="l5-lock-row">Lock 2 — Terminal Typo: <span id="l5-fin-lock2">0</span> / 180 pts</div>
+                        <div class="l5-lock-row">Lock 3 — Final Cipher: <span id="l5-fin-lock3">0</span> / 350 pts</div>
+                        <div class="l5-lock-row">Race Bonus: <span id="l5-fin-race">0</span> pts</div>
+                    </div>
+                    <div class="l5-complete-pts">TOTAL THIS LEVEL: <span id="l5-fin-total">0</span></div>
+                    <div class="l5-cumulative-score">FINAL CUMULATIVE SCORE: <span id="l5-fin-cumulative">0</span></div>
+                    <p class="l5-grand-line">THE GRAND LINE HAS BEEN CONQUERED</p>
+                    <div class="waiting-indicator"><span class="pulse-dot"></span> Waiting for admin...</div>
+                </div>
+            </div>
+
+            <!-- Lock Cracked Flash -->
+            <div id="l5-lock-cracked" class="l5-lock-cracked" style="display:none;">
+                <div class="l5-lock-cracked-text" id="l5-lock-cracked-text">🔓 LOCK 1 CRACKED</div>
+            </div>
+
+            <!-- Top Bar -->
+            <div class="l5-topbar">
+                <div class="l5-badge-area">
+                    <div class="l5-lv-num">LV.5</div>
+                    <div class="l5-lv-name">TECH ESCAPE ROOM</div>
+                    <div class="l5-lock-icons">
+                        <span id="l5-lock-1-icon" class="l5-lock-icon">🔒</span>
+                        <span id="l5-lock-2-icon" class="l5-lock-icon">🔒</span>
+                        <span id="l5-lock-3-icon" class="l5-lock-icon">🔒</span>
+                    </div>
+                </div>
+                <div class="l5-timer-center">
+                    <div id="l5-timer" class="l5-timer">08:00</div>
+                    <div class="l5-timer-label">TIME REMAINING</div>
+                </div>
+                <div class="l5-player-info">
+                    <span id="l5-score">0 PTS</span>
+                    <span id="l5-codename">AGENT</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar (3 lock segments) -->
+            <div class="l5-progress-bar-wrap">
+                <div class="l5-progress-seg dim" id="l5-seg-1">
+                    <div class="l5-seg-fill" id="l5-fill-1"></div>
+                    <span class="l5-seg-label">LOCK 1</span>
+                </div>
+                <div class="l5-progress-seg dim" id="l5-seg-2">
+                    <div class="l5-seg-fill" id="l5-fill-2"></div>
+                    <span class="l5-seg-label">LOCK 2</span>
+                </div>
+                <div class="l5-progress-seg dim" id="l5-seg-3">
+                    <div class="l5-seg-fill" id="l5-fill-3"></div>
+                    <span class="l5-seg-label">LOCK 3</span>
+                </div>
+            </div>
+
+            <!-- Main Question Area -->
+            <div class="l5-question-area">
+                <div class="l5-question-card" id="l5-question-card">
+                    <div class="l5-lock-header" id="l5-lock-header">🔒 LOCK 1 — CODE BREAKER</div>
+                    <div class="l5-lock-sub" id="l5-lock-sub">IDENTIFY THE LINE THAT CAUSES THE ERROR</div>
+                    <div class="l5-q-num" id="l5-q-num">QUESTION 1 OF 3</div>
+                    <div class="l5-question-text" id="l5-question-text">Loading...</div>
+                    <pre class="l5-code-block" id="l5-code-block" style="display:none;"></pre>
+                    <div class="l5-attempt-dots" id="l5-attempt-dots">
+                        <span class="l5-dot filled" id="l5-dot-0">⬤</span>
+                        <span class="l5-dot filled" id="l5-dot-1">⬤</span>
+                        <span class="l5-dot filled" id="l5-dot-2">⬤</span>
+                    </div>
+                    <div class="l5-answers" id="l5-answers"></div>
+                    <div class="l5-pts-feedback" id="l5-pts-feedback" style="display:none;"></div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Final Leaderboard Screen -->
+        <section id="screen-final-leaderboard" class="screen l5-leaderboard-screen">
+            <div class="l5-lb-particles" id="l5-lb-particles"></div>
+            <div class="l5-lb-content">
+                <div class="l5-lb-title">GRAND LINE CHAMPIONS</div>
+                <div class="l5-lb-subtitle">FINAL STANDINGS ACROSS ALL 5 LEVELS</div>
+                <div class="l5-lb-podium" id="l5-lb-podium"></div>
+                <div class="l5-lb-rest" id="l5-lb-rest"></div>
+                <div class="l5-lb-footer">BELMONTS TECH ARENA — SESSION COMPLETE</div>
             </div>
         </section>
+
     </main>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2" crossorigin></script>

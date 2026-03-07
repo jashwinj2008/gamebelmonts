@@ -216,10 +216,12 @@ const Storage = {
                 .from('players')
                 .delete()
                 .eq('session_id', this.getSessionId());
+                
+            if (deleteError) {
+                console.warn('Warning deleting existing players:', deleteError.message);
+            }
 
-        // Ensure any active levels are stopped when roster is cleared
-        stopAllLevels();
-            // Insert new players
+            // Insert new players using upsert to handle duplicates
             if (players.length > 0) {
                 const playersData = players.map(player => ({
                     player_id: player.id,
@@ -230,7 +232,9 @@ const Storage = {
                 
                 const { error } = await supabaseClient
                     .from('players')
-                    .insert(playersData);
+                    .upsert(playersData, {
+                        onConflict: 'player_id,session_id'
+                    });
                     
                 if (error) {
                     throw error;
@@ -318,8 +322,14 @@ function stopAllLevels() {
     if (typeof Level2 !== 'undefined' && typeof Level2.stopLevel === 'function') {
         Level2.stopLevel();
     }
+    if (typeof Level3 !== 'undefined' && typeof Level3.stopLevel === 'function') {
+        Level3.stopLevel();
+    }
     if (typeof Level4 !== 'undefined' && typeof Level4.stopLevel === 'function') {
         Level4.stopLevel();
+    }
+    if (typeof Level5 !== 'undefined' && typeof Level5.stopLevel === 'function') {
+        Level5.stopLevel();
     }
 }
 
@@ -1292,13 +1302,17 @@ function initNavigation() {
 
                 // Check if name already exists in this room
                 const players = await Storage.getPlayers();
-                const nameExists = players.some(p => p.name.toUpperCase() === name);
+                const existingPlayer = players.find(p => p.name.toUpperCase() === name);
 
-                if (nameExists) {
-                    if (nameError) {
-                        nameError.textContent = 'NAME ALREADY TAKEN IN THIS SECTION';
-                        nameError.classList.remove('hidden');
-                    }
+                if (existingPlayer) {
+                    // Returning player — restore their session instead of blocking
+                    localStorage.setItem('currentPlayer', JSON.stringify(existingPlayer));
+
+                    if (nameError) nameError.classList.add('hidden');
+
+                    Toast.show(`Welcome back, ${existingPlayer.name}!`, 'success');
+                    showScreen('lobby-screen');
+                    ParticipantLobby.init();
                     return;
                 }
 
@@ -1401,12 +1415,30 @@ const ParticipantLobby = {
         // Clear existing interval
         if (this.pollingInterval) clearInterval(this.pollingInterval);
 
-        // Poll every 2 seconds for updates
+        // Poll every 5 seconds for updates (reduced frequency)
         this.pollingInterval = setInterval(async () => {
             await this.renderRoomInfo();
             await this.renderPlayerList();
-            await this.checkGameState();
-        }, 2000);
+            // Only check game state if we're not currently in a level
+            if (!this.isInActiveLevel()) {
+                await this.checkGameState();
+            }
+        }, 5000);
+    },
+
+    isInActiveLevel() {
+        // Check if we're currently in an active level screen
+        const activeScreen = document.querySelector('.screen.active');
+        if (!activeScreen) return false;
+        
+        const screenId = activeScreen.id;
+        return screenId && (
+            screenId.includes('level-one') ||
+            screenId.includes('level-two') ||
+            screenId.includes('level-three') ||
+            screenId.includes('level-four') ||
+            screenId.includes('level-five')
+        );
     },
 
     stopPolling() {
@@ -1451,16 +1483,23 @@ const ParticipantLobby = {
             const phaseChanged = state.phase !== this.lastGamePhase;
             const levelChanged = state.currentLevel !== this.lastGameLevel;
 
-            // If admin has stopped the level, return to the lobby immediately
-            if (state.phase === 'lobby') {
+            // Only react to actual state changes, not default states
+            if (state.phase === 'lobby' && phaseChanged && this.lastGamePhase !== null) {
                 if (!this.hasStopped) {
                     this.stopPolling();
                     stopAllLevels();
                     showScreen('lobby-screen');
-                    showToast('Level stopped by admin.', 'warning');
+                    Toast.show('Level stopped by admin.', 'warning');
                     this.hasStopped = true;
                 }
 
+                this.lastGamePhase = state.phase;
+                this.lastGameLevel = state.currentLevel;
+                return;
+            }
+
+            // If this is the initial load and state is lobby, just update tracking without stopping
+            if (state.phase === 'lobby' && this.lastGamePhase === null) {
                 this.lastGamePhase = state.phase;
                 this.lastGameLevel = state.currentLevel;
                 return;
@@ -1488,11 +1527,10 @@ const ParticipantLobby = {
                         break;
                     case 3:
                         if (!this.warnedMissingLevel) {
-                            Toast.show('Level 3 is not available yet, showing placeholder.', 'warning');
                             this.warnedMissingLevel = true;
                         }
-                        stopAllLevels();
                         showScreen('screen-level-three');
+                        Level3.startLevel();
                         break;
                     case 4:
                         showScreen('screen-level-four');
@@ -1500,11 +1538,10 @@ const ParticipantLobby = {
                         break;
                     case 5:
                         if (!this.warnedMissingLevel) {
-                            Toast.show('Level 5 is not available yet, showing placeholder.', 'warning');
                             this.warnedMissingLevel = true;
                         }
-                        stopAllLevels();
                         showScreen('screen-level-five');
+                        Level5.startLevel();
                         break;
                     default:
                         if (!this.warnedMissingLevel) {
@@ -1512,6 +1549,7 @@ const ParticipantLobby = {
                             Toast.show(`Unknown level: ${state.currentLevel}`, 'error');
                             this.warnedMissingLevel = true;
                         }
+                        // Only stop levels for truly unknown levels
                         stopAllLevels();
                         showScreen('lobby-screen');
                 }
@@ -1523,6 +1561,14 @@ const ParticipantLobby = {
                 this.stopPolling();
                 stopAllLevels();
                 showScreen('results-screen');
+
+                this.lastGamePhase = state.phase;
+                this.lastGameLevel = state.currentLevel;
+            } else if (state.phase === 'finished') {
+                // Show final leaderboard
+                this.stopPolling();
+                stopAllLevels();
+                if (typeof FinalLeaderboard !== 'undefined') FinalLeaderboard.init();
 
                 this.lastGamePhase = state.phase;
                 this.lastGameLevel = state.currentLevel;
@@ -1542,12 +1588,34 @@ document.addEventListener('DOMContentLoaded', () => {
     AdminController.init();
     initNavigation();
 
-    setTimeout(() => {
+    setTimeout(async () => {
         const loader = document.getElementById('loading-screen');
         if (loader) loader.style.display = 'none';
 
         const app = document.getElementById('app');
         if (app) app.style.display = 'flex';
+
+        // Auto-restore session if player already joined (page refresh)
+        const cachedPlayer = localStorage.getItem('currentPlayer');
+        if (cachedPlayer) {
+            try {
+                const player = JSON.parse(cachedPlayer);
+                // Verify the player still exists in the DB
+                const players = await Storage.getPlayers();
+                const stillExists = players.some(p => p.id === player.id);
+                if (stillExists) {
+                    Toast.show(`Welcome back, ${player.name}!`, 'info');
+                    showScreen('lobby-screen');
+                    ParticipantLobby.init();
+                    return;
+                } else {
+                    // Player was removed (kicked), clear cache
+                    localStorage.removeItem('currentPlayer');
+                }
+            } catch (e) {
+                // DB not ready or parse error — fall through to home screen
+            }
+        }
 
         showScreen('home-screen');
     }, 2000); // Reduced delay for faster dev feedback
@@ -2251,6 +2319,7 @@ const Level2 = {
     totalTime: 480, // 8 minutes
     remainingSeconds: 480,
     timerInterval: null,
+    adminPollingInterval: null,
     
     // Question pool for Level 2
     questions: [
@@ -2340,6 +2409,8 @@ const Level2 = {
         this.shuffleQuestions();
         this.updateStats(); // Initialize stats display
         this.showUnlockBanner();
+        this.startTimer();
+        this.startAdminPolling();
     },
     
     resetState() {
@@ -2552,6 +2623,45 @@ const Level2 = {
     startLevel() {
         this.init();
         showScreen('screen-level-two');
+    },
+
+    // Start polling for admin commands
+    startAdminPolling() {
+        if (this.adminPollingInterval) clearInterval(this.adminPollingInterval);
+
+        this.adminPollingInterval = setInterval(async () => {
+            try {
+                const state = await Storage.getGameState();
+
+                // Check if admin stopped the level
+                if (state.phase === 'lobby') {
+                    this.handleAdminStop();
+                    return;
+                }
+
+            } catch (error) {
+                console.error('Error polling admin commands:', error.message);
+            }
+        }, 1000);
+    },
+
+    stopLevel() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        if (this.adminPollingInterval) {
+            clearInterval(this.adminPollingInterval);
+            this.adminPollingInterval = null;
+        }
+        this.isCompleted = true;
+        showScreen('lobby-screen');
+        ParticipantLobby.init();
+    },
+
+    handleAdminStop() {
+        this.stopLevel();
+        Toast.show('Level stopped by admin', 'warning');
     }
 };
 
@@ -2569,12 +2679,555 @@ async function adminStartLevel2() {
 window.Level2 = Level2;
 window.adminStartLevel2 = adminStartLevel2;
 
+// ============ LEVEL 3 - HEAP BUILDER ============
+const Level3 = {
+    totalTime: 480, // 8 minutes total
+    remainingSeconds: 480,
+    timerInterval: null,
+    adminPollingInterval: null,
+    
+    // Game state
+    currentRound: 1,
+    maxRounds: 4,
+    roundsCompleted: 0,
+    playerScore: 0,
+    playerName: 'AGENT',
+    playerId: '',
+    totalPoints: 0,
+    penalty: 0,
+    isCompleted: false,
+    
+    // Heap data for each round
+    rounds: [
+        { numbers: [85, 73, 42, 56, 28, 19, 35], maxSize: 7 }, // Round 1
+        { numbers: [92, 74, 68, 51, 43, 37, 26, 15], maxSize: 8 }, // Round 2  
+        { numbers: [88, 76, 65, 54, 49, 39, 32, 28, 21, 18], maxSize: 10 }, // Round 3
+        { numbers: [95, 83, 77, 69, 58, 47, 41, 36, 29, 24, 18, 12, 8], maxSize: 13 } // Round 4
+    ],
+    
+    currentNumbers: [],
+    heapTree: [], // Array representing heap positions
+    
+    init() {
+        this.resetState();
+        this.loadPlayerInfo();
+        this.setupRound();
+        this.setupDragAndDrop();
+        this.bindEvents();
+        this.updateDisplay();
+        this.startTimer();
+        this.startAdminPolling();
+        this.showInstructions();
+    },
+    
+    resetState() {
+        this.currentRound = 1;
+        this.roundsCompleted = 0;
+        this.totalPoints = 0;
+        this.penalty = 0;
+        this.isCompleted = false;
+        this.remainingSeconds = 480;
+        this.heapTree = [];
+        
+        // Hide overlays
+        document.getElementById('heap-instruction-overlay').style.display = 'none';
+        document.getElementById('heap-success-popup').style.display = 'none';
+        document.getElementById('heap-error-popup').style.display = 'none';
+        document.getElementById('heap-level-complete-overlay').style.display = 'none';
+    },
+    
+    loadPlayerInfo() {
+        const currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
+        if (currentPlayer) {
+            this.playerName = currentPlayer.name || 'AGENT';
+            this.playerId = currentPlayer.id || '';
+            this.playerScore = currentPlayer.score || 0;
+        }
+    },
+    
+    showInstructions() {
+        document.getElementById('heap-instruction-overlay').style.display = 'flex';
+        
+        document.getElementById('heap-instruction-go').onclick = () => {
+            document.getElementById('heap-instruction-overlay').style.display = 'none';
+        };
+    },
+    
+    setupRound() {
+        console.log('Setting up round:', this.currentRound); // Debug log
+        
+        // Set current round numbers
+        this.currentNumbers = [...this.rounds[this.currentRound - 1].numbers];
+        const maxSize = this.rounds[this.currentRound - 1].maxSize;
+        
+        console.log('Round numbers:', this.currentNumbers); // Debug log
+        console.log('Max heap size:', maxSize); // Debug log
+        
+        // Initialize empty heap positions  
+        this.heapTree = new Array(maxSize).fill(null);
+        
+        this.renderNumberBank();
+        this.renderHeapTree();
+        this.updateRoundProgress();
+    },
+    
+    renderNumberBank() {
+        const bank = document.getElementById('heap-bank');
+        bank.innerHTML = '';
+        
+        // Shuffle numbers for visual variety
+        const shuffled = [...this.currentNumbers].sort(() => Math.random() - 0.5);
+        
+        shuffled.forEach(num => {
+            if (num !== null) {
+                const el = document.createElement('div');
+                el.className = 'heap-number';
+                el.textContent = num;
+                el.draggable = true;
+                el.dataset.value = num;
+                bank.appendChild(el);
+            }
+        });
+    },
+    
+    renderHeapTree() {
+        const tree = document.getElementById('heap-tree');
+        const svg = document.getElementById('heap-tree-lines');
+        tree.innerHTML = '';
+        svg.innerHTML = '';
+
+        const maxSize = this.rounds[this.currentRound - 1].maxSize;
+        const maxLevel = Math.floor(Math.log2(maxSize)); // 0-indexed max level
+
+        // --- Coordinate system ---
+        // We use a fixed 1000-unit wide x-axis and pixel y-axis.
+        // SVG viewBox matches: "0 0 1000 [containerH]"
+        const containerH = 420;
+        const levelGap = Math.floor((containerH - 60) / (maxLevel + 1)); // spacing between levels
+        const nodesAtBottom = Math.pow(2, maxLevel);
+
+        // Node visual size shrinks for deeper trees so nodes don't overlap
+        const nodeSize = Math.max(44, Math.min(64, Math.floor(1000 / (nodesAtBottom * 1.6))));
+
+        svg.setAttribute('viewBox', `0 0 1000 ${containerH}`);
+
+        // Pre-compute all node positions (cx in 0..1000, cy in pixels)
+        const positions = [];
+        for (let i = 0; i < maxSize; i++) {
+            const level  = Math.floor(Math.log2(i + 1));
+            const posInLevel = i - (Math.pow(2, level) - 1);
+            const nodesInLevel = Math.pow(2, level);
+            const cx = ((posInLevel + 0.5) / nodesInLevel) * 1000; // 0..1000
+            const cy = level * levelGap + 60;                       // pixels from top
+            positions.push({ cx, cy });
+        }
+
+        // Draw SVG connecting lines first (so they appear behind nodes)
+        for (let i = 1; i < maxSize; i++) {
+            const parentIdx = Math.floor((i - 1) / 2);
+            const p = positions[parentIdx];
+            const c = positions[i];
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', p.cx);
+            line.setAttribute('y1', p.cy);
+            line.setAttribute('x2', c.cx);
+            line.setAttribute('y2', c.cy);
+            line.setAttribute('stroke', '#4a9eff');
+            line.setAttribute('stroke-width', '2.5');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('opacity', '0.75');
+            svg.appendChild(line);
+        }
+
+        // Draw heap slot nodes
+        for (let i = 0; i < maxSize; i++) {
+            const { cx, cy } = positions[i];
+            const slot = document.createElement('div');
+            slot.className = 'heap-slot';
+            slot.dataset.index = i;
+            // Convert cx (0..1000) to CSS percentage
+            slot.style.left  = (cx / 10) + '%';   // cx/1000 * 100
+            slot.style.top   = cy + 'px';
+            slot.style.width  = nodeSize + 'px';
+            slot.style.height = nodeSize + 'px';
+            slot.style.fontSize = Math.max(0.75, nodeSize / 58) + 'rem';
+
+            if (this.heapTree[i] !== null && this.heapTree[i] !== undefined) {
+                slot.textContent = this.heapTree[i];
+                slot.classList.add('filled');
+            }
+            tree.appendChild(slot);
+        }
+    },
+    
+    setupDragAndDrop() {
+        document.addEventListener('dragstart', (e) => this.handleDragStart(e));
+        document.addEventListener('dragend', (e) => this.handleDragEnd(e));
+        document.addEventListener('dragover', (e) => this.handleDragOver(e));
+        document.addEventListener('drop', (e) => this.handleDrop(e));
+        document.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+    },
+    
+    handleDragStart(e) {
+        if (e.target.classList.contains('heap-number') || e.target.classList.contains('heap-slot')) {
+            e.dataTransfer.setData('text/plain', '');
+            e.target.classList.add('dragging');
+        }
+    },
+    
+    handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.drop-hover').forEach(el => el.classList.remove('drop-hover'));
+    },
+    
+    handleDragOver(e) {
+        e.preventDefault();
+        if (e.target.classList.contains('heap-slot') || e.target.id === 'heap-bank') {
+            e.target.classList.add('drop-hover');
+        }
+    },
+    
+    handleDragLeave(e) {
+        e.target.classList.remove('drop-hover');
+    },
+    
+    handleDrop(e) {
+        e.preventDefault();
+        e.target.classList.remove('drop-hover');
+        
+        const dragged = document.querySelector('.dragging');
+        if (!dragged) return;
+        
+        if (e.target.classList.contains('heap-slot')) {
+            // Dropping into heap position
+            const index = parseInt(e.target.dataset.index);
+            
+            if (dragged.classList.contains('heap-number')) {
+                // From bank to heap
+                const value = parseInt(dragged.dataset.value);
+                
+                // If slot is filled, move existing number back to bank
+                if (this.heapTree[index] !== null) {
+                    const existingValue = this.heapTree[index];
+                    const bank = document.getElementById('heap-bank');
+                    const existingNum = document.createElement('div');
+                    existingNum.className = 'heap-number';
+                    existingNum.textContent = existingValue;
+                    existingNum.draggable = true;
+                    existingNum.dataset.value = existingValue;
+                    bank.appendChild(existingNum);
+                }
+                
+                this.heapTree[index] = value;
+                dragged.remove();
+            } else if (dragged.classList.contains('heap-slot')) {
+                // From heap to heap (swap)
+                const fromIndex = parseInt(dragged.dataset.index);
+                const temp = this.heapTree[index];
+                this.heapTree[index] = this.heapTree[fromIndex];
+                this.heapTree[fromIndex] = temp;
+            }
+            
+        } else if (e.target.id === 'heap-bank' || e.target.parentElement?.id === 'heap-bank') {
+            // Dropping back to bank
+            const targetBank = e.target.id === 'heap-bank' ? e.target : e.target.parentElement;
+            
+            if (dragged.classList.contains('heap-slot')) {
+                const index = parseInt(dragged.dataset.index);
+                const value = this.heapTree[index];
+                if (value !== null) {
+                    this.heapTree[index] = null;
+                    // Add back to bank
+                    const num = document.createElement('div');
+                    num.className = 'heap-number';
+                    num.textContent = value;
+                    num.draggable = true;
+                    num.dataset.value = value;
+                    targetBank.appendChild(num);
+                }
+            }
+        }
+        
+        this.renderHeapTree();
+    },
+    
+    bindEvents() {
+        document.getElementById('heap-validate').onclick = () => this.validateHeap();
+        document.getElementById('heap-reset').onclick = () => this.resetRound();
+    },
+    
+    validateHeap() {
+        if (!this.isHeapComplete()) {
+            this.showError('Please place all numbers in the heap before validating.');
+            return;
+        }
+        
+        if (this.isValidMaxHeap()) {
+            this.handleSuccess();
+        } else {
+            this.handleViolation();
+        }
+    },
+    
+    isHeapComplete() {
+        return this.heapTree.every(pos => pos !== null);
+    },
+    
+    isValidMaxHeap() {
+        for (let i = 0; i < this.heapTree.length; i++) {
+            const leftChild = 2 * i + 1;
+            const rightChild = 2 * i + 2;
+            
+            if (leftChild < this.heapTree.length && this.heapTree[i] < this.heapTree[leftChild]) {
+                return false;
+            }
+            if (rightChild < this.heapTree.length && this.heapTree[i] < this.heapTree[rightChild]) {
+                return false;
+            }
+        }
+        return true;
+    },
+    
+    handleSuccess() {
+        const timeWindow = this.getTimeWindow();
+        const basePoints = 100;
+        const timeBonus = timeWindow === 'EARLY' ? 50 : timeWindow === 'MID' ? 25 : 0;
+        const roundTotal = basePoints + timeBonus - this.penalty;
+        
+        this.totalPoints += roundTotal;
+        this.roundsCompleted++;
+        
+        // Update popup
+        document.getElementById('heap-popup-round').textContent = `ROUND ${this.currentRound} OF ${this.maxRounds} COMPLETE`;
+        document.getElementById('heap-popup-window').textContent = timeWindow;
+        document.getElementById('heap-popup-window').className = 'window-result ' + timeWindow.toLowerCase();
+        document.getElementById('heap-pts-base').textContent = basePoints;
+        document.getElementById('heap-pts-bonus').textContent = timeBonus;
+        document.getElementById('heap-pts-penalty').textContent = -this.penalty;
+        document.getElementById('heap-pts-total').textContent = roundTotal;
+        
+        document.getElementById('heap-success-popup').style.display = 'flex';
+        
+        setTimeout(() => {
+            document.getElementById('heap-success-popup').style.display = 'none';
+            this.nextRound();
+        }, 3000);
+    },
+    
+    handleViolation() {
+        this.penalty += 15;
+        document.getElementById('heap-penalty-info').textContent = `-${this.penalty} points total`;
+        document.getElementById('heap-error-popup').style.display = 'flex';
+        
+        setTimeout(() => {
+            document.getElementById('heap-error-popup').style.display = 'none';
+        }, 2000);
+    },
+    
+    showError(message) {
+        document.getElementById('heap-error-message').textContent = message;
+        document.getElementById('heap-error-popup').style.display = 'flex';
+        
+        setTimeout(() => {
+            document.getElementById('heap-error-popup').style.display = 'none';
+        }, 2000);
+    },
+    
+    nextRound() {
+        if (this.currentRound >= this.maxRounds) {
+            this.completeLevel();
+        } else {
+            this.currentRound++;
+            this.penalty = 0; // Reset penalty for new round
+            this.setupRound();
+            this.updateDisplay();
+        }
+    },
+    
+    resetRound() {
+        this.penalty = 0;
+        this.heapTree = new Array(this.rounds[this.currentRound - 1].maxSize).fill(null);
+        this.setupRound();
+    },
+    
+    completeLevel() {
+        this.isCompleted = true;
+        
+        // Update completion overlay
+        document.getElementById('heap-complete-rounds').textContent = this.roundsCompleted;
+        document.getElementById('heap-complete-points').textContent = this.totalPoints;
+        document.getElementById('heap-complete-cumulative').textContent = this.playerScore + this.totalPoints;
+        document.getElementById('heap-complete-time').textContent = this.formatTime(this.remainingSeconds);
+        
+        // Save final score
+        this.savePlayerProgress();
+        
+        document.getElementById('heap-level-complete-overlay').style.display = 'flex';
+        
+        setTimeout(() => {
+            this.stopLevel();
+        }, 5000);
+    },
+    
+    async savePlayerProgress() {
+        try {
+            const currentPlayer = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
+            if (currentPlayer) {
+                currentPlayer.score = (currentPlayer.score || 0) + this.totalPoints;
+                localStorage.setItem('currentPlayer', JSON.stringify(currentPlayer));
+                await Storage.savePlayers([currentPlayer]);
+            }
+        } catch (error) {
+            console.error('Error saving player progress:', error);
+        }
+    },
+    
+    getTimeWindow() {
+        const elapsed = 480 - this.remainingSeconds;
+        if (elapsed < 160) return 'EARLY';
+        if (elapsed < 320) return 'MID'; 
+        return 'LATE';
+    },
+    
+    updateDisplay() {
+        // Update header info
+        document.getElementById('heap-round-num').textContent = this.currentRound;
+        document.getElementById('heap-codename').textContent = this.playerName;
+        document.getElementById('heap-score').textContent = `${this.playerScore + this.totalPoints} PTS`;
+        
+        // Update timer
+        document.getElementById('heap-timer').textContent = this.formatTime(this.remainingSeconds);
+        
+        // Update time window
+        const window = this.getTimeWindow();
+        const label = document.getElementById('heap-window-label');
+        label.textContent = window;
+        label.className = 'heap-window-label ' + window.toLowerCase();
+        
+        this.updateRoundProgress();
+        this.updateTimeProgress();
+    },
+    
+    updateRoundProgress() {
+        document.querySelectorAll('.heap-round-dot').forEach((dot, index) => {
+            if (index + 1 === this.currentRound) {
+                dot.classList.add('active');
+            } else if (index + 1 < this.currentRound) {
+                dot.classList.add('completed');
+                dot.classList.remove('active');
+            } else {
+                dot.classList.remove('active', 'completed');
+            }
+        });
+    },
+    
+    updateTimeProgress() {
+        const elapsed = 480 - this.remainingSeconds;
+        const earlyEnd = 160;
+        const midEnd = 320;
+        
+        const early = document.getElementById('heap-seg-early');
+        const mid = document.getElementById('heap-seg-mid');
+        const late = document.getElementById('heap-seg-late');
+        
+        // Update progress bars
+        if (elapsed <= earlyEnd) {
+            early.querySelector('.seg-fill').style.width = `${(elapsed / earlyEnd) * 100}%`;
+        } else {
+            early.querySelector('.seg-fill').style.width = '100%';
+            if (elapsed <= midEnd) {
+                mid.querySelector('.seg-fill').style.width = `${((elapsed - earlyEnd) / (midEnd - earlyEnd)) * 100}%`;
+            } else {
+                mid.querySelector('.seg-fill').style.width = '100%';
+                late.querySelector('.seg-fill').style.width = `${((elapsed - midEnd) / (480 - midEnd)) * 100}%`;
+            }
+        }
+    },
+    
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    },
+    
+    startTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        
+        this.timerInterval = setInterval(() => {
+            this.remainingSeconds--;
+            this.updateDisplay();
+            
+            if (this.remainingSeconds <= 0) {
+                this.completeLevel();
+            }
+        }, 1000);
+    },
+    
+    startAdminPolling() {
+        if (this.adminPollingInterval) clearInterval(this.adminPollingInterval);
+
+        this.adminPollingInterval = setInterval(async () => {
+            try {
+                const state = await Storage.getGameState();
+
+                // Check if admin stopped the level
+                if (state.phase === 'lobby') {
+                    this.handleAdminStop();
+                    return;
+                }
+
+            } catch (error) {
+                console.error('Error polling admin commands:', error.message);
+            }
+        }, 1000);
+    },
+
+    stopLevel() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        if (this.adminPollingInterval) {
+            clearInterval(this.adminPollingInterval);
+            this.adminPollingInterval = null;
+        }
+        this.isCompleted = true;
+        showScreen('lobby-screen');
+        ParticipantLobby.init();
+    },
+
+    handleAdminStop() {
+        this.stopLevel();
+        Toast.show('Level stopped by admin', 'warning');
+    },
+    
+    startLevel() {
+        this.init();
+        showScreen('screen-level-three');
+    }
+};
+
+// Admin function to start Level 3
+async function adminStartLevel3() {
+    const state = await Storage.getGameState();
+    state.phase = 'level3';
+    state.currentLevel = 3;
+    await Storage.saveGameState(state);
+    
+    Level3.startLevel();
+    Toast.show('Level 3 (Heap Builder) Started!', 'success');
+}
+
+window.Level3 = Level3;
+window.adminStartLevel3 = adminStartLevel3;
+
 // ============ LEVEL 4 LOGIC - BONUS ROUND 2 ============
 
 const Level4 = {
     totalTime: 480, // 8 minutes
     remainingSeconds: 480,
     timerInterval: null,
+    adminPollingInterval: null,
     
     // Question pool for Level 4 (more technical)
     questions: [
@@ -2663,6 +3316,29 @@ const Level4 = {
         this.shuffleQuestions();
         this.updateStats(); // Initialize stats display
         this.showUnlockBanner();
+        this.startAdminPolling();
+    },
+
+    startAdminPolling() {
+        if (this.adminPollingInterval) clearInterval(this.adminPollingInterval);
+
+        this.adminPollingInterval = setInterval(async () => {
+            try {
+                const state = await Storage.getGameState();
+
+                // Check if admin stopped the level
+                if (state.phase === 'lobby') {
+                    this.handleAdminStop();
+                }
+            } catch (error) {
+                console.error('Error polling admin commands (L4):', error.message);
+            }
+        }, 1000);
+    },
+
+    handleAdminStop() {
+        this.stopLevel();
+        Toast.show('Level stopped by admin', 'warning');
     },
     
     resetState() {
@@ -2854,13 +3530,25 @@ const Level4 = {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
         }
+        if (this.adminPollingInterval) {
+            clearInterval(this.adminPollingInterval);
+            this.adminPollingInterval = null;
+        }
         this.isCompleted = true;
         showScreen('lobby-screen');
+        // Properly reinitialize participant lobby
+        if (typeof ParticipantLobby !== 'undefined') {
+            ParticipantLobby.init();
+        }
     },
 
     async endLevel() {
         this.isCompleted = true;
         clearInterval(this.timerInterval);
+        if (this.adminPollingInterval) {
+            clearInterval(this.adminPollingInterval);
+            this.adminPollingInterval = null;
+        }
         
         const state = await Storage.getGameState();
         state.phase = 'lobby';
@@ -2892,3 +3580,685 @@ async function adminStartLevel4() {
 
 window.Level4 = Level4;
 window.adminStartLevel4 = adminStartLevel4;
+
+// ============ LEVEL 5 — TECH ESCAPE ROOM ============
+const Level5 = {
+    totalTime: 480,
+    remainingSeconds: 480,
+    timerInterval: null,
+    adminPollingInterval: null,
+    isCompleted: false,
+    hasEscaped: false,
+    playerName: 'AGENT',
+    playerId: '',
+    playerScore: 0,
+
+    // Lock points
+    lock1Points: 0,
+    lock2Points: 0,
+    lock3Points: 0,
+    raceBonus: 0,
+    levelPoints: 0,
+
+    // Attempt tracking per question inside each lock
+    lock1Attempts: [0, 0, 0],
+    lock2Attempts: [0, 0, 0],
+    lock3Attempts: [0, 0, 0, 0, 0],
+
+    // Current state
+    currentLock: 1,
+    currentQIndex: 0,
+    currentAttempts: 0,
+    lastKnownEscapeOrder: [],
+
+    locks: [
+        {
+            id: 1,
+            header: '🔒 LOCK 1 — CODE BREAKER',
+            sub: 'IDENTIFY THE LINE THAT CAUSES THE ERROR',
+            qLabel: 'QUESTION',
+            totalQ: 3,
+            pointsPerAttempt: [50, 30, 15],
+            questions: [
+                {
+                    text: 'Which line contains the error?',
+                    code: 'names = ["Alice", "Bob", "Charlie"]\nnames.sort()\nfor name in names\n    print(name)',
+                    options: [
+                        'Line 1 — names = ["Alice", "Bob", "Charlie"]',
+                        'Line 2 — names.sort()',
+                        'Line 3 — for name in names',
+                        'Line 4 — print(name)'
+                    ],
+                    correct: 2
+                },
+                {
+                    text: 'Which line contains the error?',
+                    code: 'numbers = [72, 45, 88, 60, 95]\ntotal = 0\nfor num in numbers:\n    total == total + num\nprint(total)',
+                    options: [
+                        'Line 1 — numbers = [72, 45, 88, 60, 95]',
+                        'Line 2 — total = 0',
+                        'Line 4 — total == total + num',
+                        'Line 5 — print(total)'
+                    ],
+                    correct: 2
+                },
+                {
+                    text: 'Which line contains the error?',
+                    code: 'scores = [33, 67, 45, 89, 12]\nscores.sort(reverse=True)\nhighest = scores[1]\nprint(highest)',
+                    options: [
+                        'Line 1 — scores = [33, 67, 45, 89, 12]',
+                        'Line 2 — scores.sort(reverse=True)',
+                        'Line 3 — highest = scores[1]',
+                        'Line 4 — print(highest)'
+                    ],
+                    correct: 2
+                }
+            ]
+        },
+        {
+            id: 2,
+            header: '🔒 LOCK 2 — TERMINAL TYPO',
+            sub: 'PREDICT THE OUTPUT — WHAT DOES THE TERMINAL PRINT?',
+            qLabel: 'QUESTION',
+            totalQ: 3,
+            pointsPerAttempt: [60, 35, 15],
+            questions: [
+                {
+                    text: 'What does this code print?',
+                    code: 'x = "hello"\nprint(x[1])',
+                    options: ['"h"', '"e"', '"l"', '"o"'],
+                    correct: 1
+                },
+                {
+                    text: 'What does this code print?',
+                    code: 'nums = [3, 1, 4, 1, 5]\nnums.sort()\nprint(nums[0])',
+                    options: ['3', '5', '1', '4'],
+                    correct: 2
+                },
+                {
+                    text: 'What does this code print?',
+                    code: 'a = 7\nb = 2\nprint(a // b)',
+                    options: ['3.5', '4', '3', '2'],
+                    correct: 2
+                }
+            ]
+        },
+        {
+            id: 3,
+            header: '🔒 LOCK 3 — FINAL CIPHER',
+            sub: 'SOLVE THE RIDDLES — 5 CLUES STAND BETWEEN YOU AND FREEDOM',
+            qLabel: 'RIDDLE',
+            totalQ: 5,
+            pointsPerAttempt: [70, 40, 20],
+            questions: [
+                {
+                    text: 'I store your data but vanish the moment power is off. Fast as lightning but forget everything. What am I?',
+                    code: null,
+                    options: ['SSD', 'Hard Drive', 'RAM', 'ROM'],
+                    correct: 2
+                },
+                {
+                    text: 'I am the boss of the computer. Every instruction passes through me. Nothing runs without me. What am I?',
+                    code: null,
+                    options: ['RAM', 'GPU', 'Motherboard', 'CPU'],
+                    correct: 3
+                },
+                {
+                    text: 'I am a set of rules two computers follow when they want to talk to each other. What am I?',
+                    code: null,
+                    options: ['Algorithm', 'Protocol', 'Compiler', 'Variable'],
+                    correct: 1
+                },
+                {
+                    text: 'I am the process of finding and fixing mistakes in your code. Developers spend most of their time doing me. What am I?',
+                    code: null,
+                    options: ['Compiling', 'Deploying', 'Debugging', 'Rendering'],
+                    correct: 2
+                },
+                {
+                    text: 'I am a step by step set of instructions written to solve a specific problem. Recipes and directions are real world versions of me. What am I?',
+                    code: null,
+                    options: ['Function', 'Loop', 'Variable', 'Algorithm'],
+                    correct: 3
+                }
+            ]
+        }
+    ],
+
+    init() {
+        this.resetState();
+        this.loadPlayerInfo();
+    },
+
+    resetState() {
+        this.remainingSeconds = 480;
+        this.isCompleted = false;
+        this.hasEscaped = false;
+        this.currentLock = 1;
+        this.currentQIndex = 0;
+        this.currentAttempts = 0;
+        this.lock1Points = 0;
+        this.lock2Points = 0;
+        this.lock3Points = 0;
+        this.raceBonus = 0;
+        this.levelPoints = 0;
+        this.lock1Attempts = [0, 0, 0];
+        this.lock2Attempts = [0, 0, 0];
+        this.lock3Attempts = [0, 0, 0, 0, 0];
+        this.lastKnownEscapeOrder = [];
+
+        // Reset lock icons
+        [1, 2, 3].forEach(i => {
+            const icon = document.getElementById(`l5-lock-${i}-icon`);
+            if (icon) { icon.textContent = '🔒'; icon.classList.remove('unlocked'); }
+        });
+
+        // Reset progress bar
+        [1, 2, 3].forEach(i => {
+            const seg = document.getElementById(`l5-seg-${i}`);
+            const fill = document.getElementById(`l5-fill-${i}`);
+            if (seg) seg.className = 'l5-progress-seg dim';
+            if (fill) fill.style.width = '0%';
+        });
+
+        // Hide all overlays except intro
+        ['l5-complete-overlay', 'l5-escaped-overlay', 'l5-escape-announcement', 'l5-lock-cracked'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        document.getElementById('l5-pts-feedback').style.display = 'none';
+        document.getElementById('l5-intro-overlay').style.display = 'flex';
+
+        const timer = document.getElementById('l5-timer');
+        if (timer) { timer.textContent = '08:00'; timer.className = 'l5-timer'; }
+    },
+
+    loadPlayerInfo() {
+        const cp = JSON.parse(localStorage.getItem('currentPlayer') || 'null');
+        if (cp) {
+            this.playerName = cp.name || 'AGENT';
+            this.playerId = cp.id || '';
+            this.playerScore = cp.score || 0;
+        }
+        const cdn = document.getElementById('l5-codename');
+        const sc = document.getElementById('l5-score');
+        if (cdn) cdn.textContent = this.playerName;
+        if (sc) sc.textContent = `${this.playerScore} PTS`;
+    },
+
+    showIntro() {
+        return new Promise(resolve => {
+            const overlay = document.getElementById('l5-intro-overlay');
+            const els = {
+                boss:  document.getElementById('l5-intro-boss'),
+                title: document.getElementById('l5-intro-title'),
+                sub1:  document.getElementById('l5-intro-sub1'),
+                sub2:  document.getElementById('l5-intro-sub2'),
+                count: document.getElementById('l5-intro-count')
+            };
+            overlay.style.display = 'flex';
+            Object.values(els).forEach(e => { if (e) { e.style.opacity = '0'; e.style.display = ''; } });
+            if (els.count) els.count.style.display = 'none';
+
+            const show = (el, delay) => setTimeout(() => { if (el) el.style.opacity = '1'; }, delay);
+            show(els.boss, 100);
+            show(els.title, 650);
+            show(els.sub1, 1150);
+            show(els.sub2, 1350);
+
+            const counts = ['3', '2', '1', 'GO!'];
+            const countDelays = [1700, 2300, 2900, 3450];
+            counts.forEach((c, i) => {
+                setTimeout(() => {
+                    if (!els.count) return;
+                    els.count.style.display = 'block';
+                    els.count.style.opacity = '1';
+                    els.count.textContent = c;
+                    els.count.className = 'l5-intro-count' + (c === 'GO!' ? ' go' : '');
+                }, countDelays[i]);
+            });
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                resolve();
+            }, 4000);
+        });
+    },
+
+    startTimer() {
+        this.updateTimerDisplay();
+        this.timerInterval = setInterval(() => {
+            if (this.isCompleted) { clearInterval(this.timerInterval); return; }
+            this.remainingSeconds--;
+            this.updateTimerDisplay();
+            if (this.remainingSeconds <= 0) {
+                clearInterval(this.timerInterval);
+                this.endLevel(false);
+            }
+        }, 1000);
+    },
+
+    updateTimerDisplay() {
+        const m = Math.floor(this.remainingSeconds / 60);
+        const s = this.remainingSeconds % 60;
+        const el = document.getElementById('l5-timer');
+        if (!el) return;
+        el.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        el.className = 'l5-timer';
+        if (this.remainingSeconds <= 60)  el.className = 'l5-timer red pulse';
+        else if (this.remainingSeconds <= 180) el.className = 'l5-timer amber';
+    },
+
+    loadCurrentQuestion() {
+        const lock = this.locks[this.currentLock - 1];
+        const q = lock.questions[this.currentQIndex];
+
+        document.getElementById('l5-lock-header').textContent = lock.header;
+        document.getElementById('l5-lock-sub').textContent = lock.sub;
+        document.getElementById('l5-q-num').textContent = `${lock.qLabel} ${this.currentQIndex + 1} OF ${lock.totalQ}`;
+        document.getElementById('l5-question-text').textContent = q.text;
+
+        const codeBlock = document.getElementById('l5-code-block');
+        if (q.code) {
+            codeBlock.style.display = 'block';
+            codeBlock.innerHTML = this.highlightCode(q.code);
+        } else {
+            codeBlock.style.display = 'none';
+        }
+
+        this.currentAttempts = 0;
+        this.updateAttemptDots();
+
+        const letters = ['A', 'B', 'C', 'D'];
+        const answers = document.getElementById('l5-answers');
+        answers.innerHTML = q.options.map((opt, idx) => `
+            <button class="l5-answer-btn" data-index="${idx}">
+                <span class="l5-opt-letter">${letters[idx]}</span>
+                <span class="l5-opt-text">${opt}</span>
+            </button>
+        `).join('');
+        answers.querySelectorAll('.l5-answer-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.handleAnswer(parseInt(btn.dataset.index)));
+        });
+
+        document.getElementById('l5-pts-feedback').style.display = 'none';
+        this.updateProgressBar();
+    },
+
+    highlightCode(code) {
+        const keywords = /\b(for|in|print|sort|sum|True|False|None|if|else|elif|return|def|import|from|class|while|break|continue|and|or|not)\b/g;
+        return code.split('\n').map((line, i) => {
+            const num = `<span class="l5-line-num">${(i + 1).toString().padStart(2,' ')}</span>`;
+            const hl = line
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(keywords, '<span class="l5-kw">$1</span>')
+                .replace(/(".*?"|'.*?')/g, '<span class="l5-str">$1</span>')
+                .replace(/\b(\d+)\b/g, '<span class="l5-num">$1</span>');
+            return `<div class="l5-code-line">${num}  ${hl}</div>`;
+        }).join('');
+    },
+
+    updateAttemptDots() {
+        for (let i = 0; i < 3; i++) {
+            const dot = document.getElementById('l5-dot-' + i);
+            if (!dot) continue;
+            if (i < (3 - this.currentAttempts)) {
+                dot.textContent = '⬤'; dot.className = 'l5-dot filled';
+            } else {
+                dot.textContent = '○'; dot.className = 'l5-dot empty';
+            }
+        }
+    },
+
+    updateProgressBar() {
+        [1, 2, 3].forEach(i => {
+            const seg = document.getElementById(`l5-seg-${i}`);
+            const fill = document.getElementById(`l5-fill-${i}`);
+            if (!seg || !fill) return;
+            if (i < this.currentLock) {
+                seg.className = 'l5-progress-seg completed';
+                fill.style.width = '100%';
+            } else if (i === this.currentLock && !this.isCompleted) {
+                seg.className = 'l5-progress-seg active';
+                const lock = this.locks[this.currentLock - 1];
+                fill.style.width = (this.currentQIndex / lock.totalQ * 100) + '%';
+            } else {
+                seg.className = 'l5-progress-seg dim';
+                fill.style.width = '0%';
+            }
+        });
+    },
+
+    async handleAnswer(selectedIndex) {
+        if (this.isCompleted) return;
+        const lock = this.locks[this.currentLock - 1];
+        const q = lock.questions[this.currentQIndex];
+        const buttons = document.querySelectorAll('#l5-answers .l5-answer-btn');
+        buttons.forEach(btn => btn.style.pointerEvents = 'none');
+        this.currentAttempts++;
+
+        const attemptsArr = this.currentLock === 1 ? this.lock1Attempts :
+                            this.currentLock === 2 ? this.lock2Attempts : this.lock3Attempts;
+        attemptsArr[this.currentQIndex] = this.currentAttempts;
+
+        if (selectedIndex === q.correct) {
+            const pts = lock.pointsPerAttempt[this.currentAttempts - 1] || 0;
+            if (this.currentLock === 1) this.lock1Points += pts;
+            else if (this.currentLock === 2) this.lock2Points += pts;
+            else this.lock3Points += pts;
+            this.levelPoints += pts;
+            this.playerScore += pts;
+
+            buttons[selectedIndex].classList.add('l5-correct');
+            this.showPtsFeedback(`+${pts} PTS`, true);
+            this.updateScoreDisplay();
+            await this.saveScoreIncrement(pts);
+            setTimeout(() => this.nextQuestion(), 1500);
+        } else {
+            buttons[selectedIndex].classList.add('l5-wrong');
+            if (buttons[q.correct]) buttons[q.correct].classList.add('l5-correct');
+            this.showPtsFeedback('0 PTS', false);
+            setTimeout(() => this.nextQuestion(), 1500);
+        }
+    },
+
+    showPtsFeedback(msg, positive) {
+        const el = document.getElementById('l5-pts-feedback');
+        el.textContent = msg;
+        el.className = 'l5-pts-feedback ' + (positive ? 'positive' : 'negative');
+        el.style.display = 'block';
+    },
+
+    async nextQuestion() {
+        this.currentQIndex++;
+        if (this.currentQIndex >= this.locks[this.currentLock - 1].totalQ) {
+            await this.completeLock();
+        } else {
+            this.loadCurrentQuestion();
+        }
+    },
+
+    async completeLock() {
+        const lockId = this.currentLock;
+        const lockPts = lockId === 1 ? this.lock1Points : lockId === 2 ? this.lock2Points : this.lock3Points;
+        const unlocked = lockPts > 0;
+
+        if (unlocked) {
+            const icon = document.getElementById(`l5-lock-${lockId}-icon`);
+            if (icon) { icon.textContent = '🔓'; icon.classList.add('unlocked'); }
+
+            const seg = document.getElementById(`l5-seg-${lockId}`);
+            const fill = document.getElementById(`l5-fill-${lockId}`);
+            if (seg) seg.className = 'l5-progress-seg completed';
+            if (fill) fill.style.width = '100%';
+
+            const cracked = document.getElementById('l5-lock-cracked');
+            const crackedText = document.getElementById('l5-lock-cracked-text');
+            if (cracked && crackedText) {
+                crackedText.textContent = `🔓 LOCK ${lockId} CRACKED`;
+                cracked.style.display = 'flex';
+            }
+            await new Promise(r => setTimeout(r, 1500));
+            if (cracked) cracked.style.display = 'none';
+        }
+
+        if (lockId < 3) {
+            this.currentLock++;
+            this.currentQIndex = 0;
+            this.currentAttempts = 0;
+            this.loadCurrentQuestion();
+        } else {
+            if (this.levelPoints > 0) {
+                await this.playerEscaped();
+            } else {
+                await this.endLevel(false);
+            }
+        }
+    },
+
+    async playerEscaped() {
+        this.isCompleted = true;
+        this.hasEscaped = true;
+        clearInterval(this.timerInterval);
+        clearInterval(this.adminPollingInterval);
+        this.timerInterval = null;
+        this.adminPollingInterval = null;
+
+        let escapePosition = null;
+        try {
+            const state = await Storage.getGameState();
+            const escapeOrder = Array.isArray(state.escape_order) ? state.escape_order : [];
+            escapePosition = escapeOrder.length + 1;
+            const raceMap = { 1: 200, 2: 100, 3: 50 };
+            this.raceBonus = raceMap[escapePosition] || 0;
+            this.levelPoints += this.raceBonus;
+            this.playerScore += this.raceBonus;
+            escapeOrder.push(this.playerId);
+            state.escape_order = escapeOrder;
+            await Storage.saveGameState(state);
+        } catch (e) {
+            console.error('Error updating escape_order:', e.message);
+        }
+
+        if (this.raceBonus > 0) await this.saveScoreIncrement(this.raceBonus);
+        await this.saveLevel5Data(true, escapePosition);
+
+        document.getElementById('l5-escaped-codename').textContent = this.playerName;
+        document.getElementById('l5-escaped-pts').textContent = this.levelPoints;
+        document.getElementById('l5-escaped-total').textContent = this.playerScore;
+        if (this.raceBonus > 0) {
+            document.getElementById('l5-race-bonus-display').style.display = 'block';
+            document.getElementById('l5-race-bonus-pts').textContent = `+${this.raceBonus}`;
+        }
+        document.getElementById('l5-escaped-overlay').style.display = 'flex';
+        this.updateScoreDisplay();
+    },
+
+    updateScoreDisplay() {
+        const el = document.getElementById('l5-score');
+        if (el) el.textContent = `${this.playerScore} PTS`;
+        const cp = JSON.parse(localStorage.getItem('currentPlayer') || '{}');
+        cp.score = this.playerScore;
+        localStorage.setItem('currentPlayer', JSON.stringify(cp));
+    },
+
+    async saveScoreIncrement(pts) {
+        try {
+            const players = await Storage.getPlayers();
+            const idx = players.findIndex(p => p.id === this.playerId);
+            if (idx !== -1) {
+                players[idx].score = (players[idx].score || 0) + pts;
+                await Storage.savePlayers(players);
+            }
+        } catch (e) {
+            console.error('L5 score increment error:', e.message);
+        }
+    },
+
+    async saveLevel5Data(escaped, escapePosition) {
+        try {
+            await Storage.savePlayerScore(
+                this.playerId, this.playerName, 5, this.levelPoints,
+                480 - this.remainingSeconds,
+                {
+                    escaped,
+                    escapePosition: escapePosition || null,
+                    timeRemaining: this.remainingSeconds,
+                    raceBonus: this.raceBonus,
+                    lock1Points: this.lock1Points,
+                    lock2Points: this.lock2Points,
+                    lock3Points: this.lock3Points,
+                    totalPoints: this.levelPoints,
+                    lock1Attempts: this.lock1Attempts,
+                    lock2Attempts: this.lock2Attempts,
+                    lock3Attempts: this.lock3Attempts
+                }
+            );
+        } catch (e) {
+            console.error('L5 save error:', e.message);
+        }
+    },
+
+    startAdminPolling() {
+        if (this.adminPollingInterval) clearInterval(this.adminPollingInterval);
+        this.adminPollingInterval = setInterval(async () => {
+            try {
+                const state = await Storage.getGameState();
+                if (state.phase === 'finished') {
+                    this.handleAdminFinish();
+                    return;
+                }
+                if (!this.isCompleted && state.phase === 'lobby') {
+                    this.handleAdminStop();
+                    return;
+                }
+                if (!this.hasEscaped) {
+                    this.checkEscapeAnnouncements(state);
+                }
+            } catch (e) {
+                console.error('L5 admin poll error:', e.message);
+            }
+        }, 2000);
+    },
+
+    checkEscapeAnnouncements(state) {
+        const order = Array.isArray(state.escape_order) ? state.escape_order : [];
+        if (order.length > this.lastKnownEscapeOrder.length) {
+            const newId = order[order.length - 1];
+            if (newId !== this.playerId) {
+                this.showEscapeAnnouncement(newId);
+            }
+        }
+        this.lastKnownEscapeOrder = [...order];
+    },
+
+    async showEscapeAnnouncement(escapeeId) {
+        try {
+            const players = await Storage.getPlayers();
+            const p = players.find(pl => pl.id === escapeeId);
+            const name = p ? p.name : 'A PLAYER';
+            const nameEl = document.getElementById('l5-escaped-player-name');
+            if (nameEl) nameEl.textContent = name;
+            const ann = document.getElementById('l5-escape-announcement');
+            if (ann) {
+                ann.style.display = 'flex';
+                setTimeout(() => { ann.style.display = 'none'; }, 3000);
+            }
+        } catch (e) {}
+    },
+
+    handleAdminStop() {
+        this.stopLevel();
+        Toast.show('Level stopped by admin', 'warning');
+    },
+
+    handleAdminFinish() {
+        clearInterval(this.timerInterval);
+        clearInterval(this.adminPollingInterval);
+        this.timerInterval = null;
+        this.adminPollingInterval = null;
+        this.isCompleted = true;
+        showScreen('screen-final-leaderboard');
+        FinalLeaderboard.init();
+    },
+
+    stopLevel() {
+        clearInterval(this.timerInterval);
+        clearInterval(this.adminPollingInterval);
+        this.timerInterval = null;
+        this.adminPollingInterval = null;
+        this.isCompleted = true;
+        showScreen('lobby-screen');
+        if (typeof ParticipantLobby !== 'undefined') ParticipantLobby.init();
+    },
+
+    async endLevel(escaped) {
+        this.isCompleted = true;
+        clearInterval(this.timerInterval);
+        clearInterval(this.adminPollingInterval);
+        this.timerInterval = null;
+        this.adminPollingInterval = null;
+        if (!escaped) await this.saveLevel5Data(false, null);
+
+        document.getElementById('l5-fin-lock1').textContent = this.lock1Points;
+        document.getElementById('l5-fin-lock2').textContent = this.lock2Points;
+        document.getElementById('l5-fin-lock3').textContent = this.lock3Points;
+        document.getElementById('l5-fin-race').textContent = this.raceBonus;
+        document.getElementById('l5-fin-total').textContent = this.levelPoints;
+        document.getElementById('l5-fin-cumulative').textContent = this.playerScore;
+        const status = document.getElementById('l5-complete-status');
+        status.textContent = escaped ? 'ESCAPED ✓' : 'TIME OUT ✗';
+        status.className = 'l5-complete-status ' + (escaped ? 'escaped' : 'timeout');
+        document.getElementById('l5-complete-overlay').style.display = 'flex';
+    },
+
+    async startLevel() {
+        this.init();
+        showScreen('screen-level-five');
+        await this.showIntro();
+        this.startAdminPolling();
+        this.startTimer();
+        this.loadCurrentQuestion();
+    }
+};
+
+// ============ FINAL LEADERBOARD ============
+const FinalLeaderboard = {
+    async init() {
+        showScreen('screen-final-leaderboard');
+        await this.render();
+    },
+
+    async render() {
+        try {
+            const players = await Storage.getPlayers();
+            players.sort((a, b) => (b.score || 0) - (a.score || 0));
+            const podium = document.getElementById('l5-lb-podium');
+            const rest = document.getElementById('l5-lb-rest');
+            if (!podium || !rest) return;
+
+            const medals = ['🏆', '🥈', '🥉'];
+            const top3 = players.slice(0, 3);
+            const others = players.slice(3);
+
+            podium.innerHTML = top3.map((p, i) => `
+                <div class="l5-lb-podium-entry rank-${i + 1}">
+                    <div class="l5-lb-medal">${medals[i] || ''}</div>
+                    <div class="l5-lb-name">${p.name}</div>
+                    <div class="l5-lb-score">${p.score || 0} PTS</div>
+                </div>
+            `).join('');
+
+            rest.innerHTML = others.map((p, i) => `
+                <div class="l5-lb-row">
+                    <span class="l5-lb-rank">#${i + 4}</span>
+                    <span class="l5-lb-row-name">${p.name}</span>
+                    <span class="l5-lb-row-score">${p.score || 0} PTS</span>
+                </div>
+            `).join('');
+
+            this.startParticles();
+        } catch (e) {
+            console.error('Leaderboard render error:', e.message);
+        }
+    },
+
+    startParticles() {
+        const container = document.getElementById('l5-lb-particles');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let i = 0; i < 40; i++) {
+            const p = document.createElement('div');
+            p.className = 'l5-particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDelay = Math.random() * 5 + 's';
+            p.style.animationDuration = (3 + Math.random() * 4) + 's';
+            container.appendChild(p);
+        }
+    }
+};
+
+// Global expose all levels
+window.Level3 = Level3;
+window.Level5 = Level5;
+window.FinalLeaderboard = FinalLeaderboard;
