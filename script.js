@@ -3609,116 +3609,116 @@ const Level5 = {
     currentAttempts: 0,
     lastKnownEscapeOrder: [],
 
-    locks: [
-        {
-            id: 1,
-            header: '🔒 LOCK 1 — CODE BREAKER',
-            sub: 'IDENTIFY THE LINE THAT CAUSES THE ERROR',
-            qLabel: 'QUESTION',
-            totalQ: 3,
-            pointsPerAttempt: [50, 30, 15],
-            questions: [
-                {
-                    text: 'Which line contains the error?',
-                    code: 'names = ["Alice", "Bob", "Charlie"]\nnames.sort()\nfor name in names\n    print(name)',
-                    options: [
-                        'Line 1 — names = ["Alice", "Bob", "Charlie"]',
-                        'Line 2 — names.sort()',
-                        'Line 3 — for name in names',
-                        'Line 4 — print(name)'
-                    ],
-                    correct: 2
-                },
-                {
-                    text: 'Which line contains the error?',
-                    code: 'numbers = [72, 45, 88, 60, 95]\ntotal = 0\nfor num in numbers:\n    total == total + num\nprint(total)',
-                    options: [
-                        'Line 1 — numbers = [72, 45, 88, 60, 95]',
-                        'Line 2 — total = 0',
-                        'Line 4 — total == total + num',
-                        'Line 5 — print(total)'
-                    ],
-                    correct: 2
-                },
-                {
-                    text: 'Which line contains the error?',
-                    code: 'scores = [33, 67, 45, 89, 12]\nscores.sort(reverse=True)\nhighest = scores[1]\nprint(highest)',
-                    options: [
-                        'Line 1 — scores = [33, 67, 45, 89, 12]',
-                        'Line 2 — scores.sort(reverse=True)',
-                        'Line 3 — highest = scores[1]',
-                        'Line 4 — print(highest)'
-                    ],
-                    correct: 2
-                }
-            ]
-        },
-        {
-            id: 2,
-            header: '🔒 LOCK 2 — TERMINAL TYPO',
-            sub: 'PREDICT THE OUTPUT — WHAT DOES THE TERMINAL PRINT?',
-            qLabel: 'QUESTION',
-            totalQ: 3,
-            pointsPerAttempt: [60, 35, 15],
-            questions: [
-                {
-                    text: 'What does this code print?',
-                    code: 'x = "hello"\nprint(x[1])',
-                    options: ['"h"', '"e"', '"l"', '"o"'],
-                    correct: 1
-                },
-                {
-                    text: 'What does this code print?',
-                    code: 'nums = [3, 1, 4, 1, 5]\nnums.sort()\nprint(nums[0])',
-                    options: ['3', '5', '1', '4'],
-                    correct: 2
-                },
-                {
-                    text: 'What does this code print?',
-                    code: 'a = 7\nb = 2\nprint(a // b)',
-                    options: ['3.5', '4', '3', '2'],
-                    correct: 2
-                }
-            ]
-        },
-        {
-            id: 3,
-            header: '🔒 LOCK 3 — FINAL CIPHER',
-            sub: 'SOLVE THE RIDDLES — 5 CLUES STAND BETWEEN YOU AND FREEDOM',
-            qLabel: 'RIDDLE',
-            totalQ: 5,
-            pointsPerAttempt: [70, 40, 20],
-            questions: [
-                {
-                    text: 'I store your data but vanish the moment power is off. Fast as lightning but forget everything. What am I?',
-                    code: null,
-                    options: ['SSD', 'Hard Drive', 'RAM', 'ROM'],
-                    correct: 2
-                },
-                {
-                    text: 'I am the boss of the computer. Every instruction passes through me. Nothing runs without me. What am I?',
-                    code: null,
-                    options: ['RAM', 'GPU', 'Motherboard', 'CPU'],
-                    correct: 3
-                },
-                {
-                    text: 'I am a set of rules two computers follow when they want to talk to each other. What am I?',
-                    code: null,
-                    options: ['Algorithm', 'Protocol', 'Compiler', 'Variable'],
-                    correct: 1
-                },
-                {
-                    text: 'I am the process of finding and fixing mistakes in your code. Developers spend most of their time doing me. What am I?',
-                    code: null,
-                    options: ['Compiling', 'Deploying', 'Debugging', 'Rendering'],
-                    correct: 2
-                },
-                {
-                    text: 'I am a step by step set of instructions written to solve a specific problem. Recipes and directions are real world versions of me. What am I?',
-                    code: null,
-                    options: ['Function', 'Loop', 'Variable', 'Algorithm'],
-                    correct: 3
-                }
+   locks: [
+    {
+        id: 1,
+        header: '🔒 LOCK 1 — CODE BREAKER',
+        sub: 'IDENTIFY THE LINE THAT CAUSES THE ERROR',
+        qLabel: 'QUESTION',
+        totalQ: 3,
+        pointsPerAttempt: [50, 30, 15],
+        questions: [
+            {
+                text: 'Which line contains the error?',
+                code: 'names = ["Alice", "Bob", "Charlie"]\nnames.sort()\nfor name in names\n    print(name)',
+                options: [
+                    'Line 1 — names = ["Alice", "Bob", "Charlie"]',
+                    'Line 2 — names.sort()',
+                    'Line 3 — for name in names',
+                    'Line 4 — print(name)'
+                ],
+                correct: 2
+            },
+            {
+                text: 'Which line contains the error?',
+                code: 'numbers = [72, 45, 88, 60, 95]\ntotal = 0\nfor num in numbers:\n    total == total + num\nprint(total)',
+                options: [
+                    'Line 4 — total == total + num',
+                    'Line 1 — numbers = [72, 45, 88, 60, 95]',
+                    'Line 2 — total = 0',
+                    'Line 5 — print(total)'
+                ],
+                correct: 0
+            },
+            {
+                text: 'Which line contains the error?',
+                code: 'scores = [33, 67, 45, 89, 12]\nscores.sort(reverse=True)\nhighest = scores[1]\nprint(highest)',
+                options: [
+                    'Line 1 — scores = [33, 67, 45, 89, 12]',
+                    'Line 2 — scores.sort(reverse=True)',
+                    'Line 4 — print(highest)',
+                    'Line 3 — highest = scores[1]'
+                ],
+                correct: 3
+            }
+        ]
+    },
+    {
+        id: 2,
+        header: '🔒 LOCK 2 — TERMINAL TYPO',
+        sub: 'PREDICT THE OUTPUT — WHAT DOES THE TERMINAL PRINT?',
+        qLabel: 'QUESTION',
+        totalQ: 3,
+        pointsPerAttempt: [60, 35, 15],
+        questions: [
+            {
+                text: 'What does this code print?',
+                code: 'x = "hello"\nprint(x[1])',
+                options: ['"e"', '"h"', '"l"', '"o"'],
+                correct: 0
+            },
+            {
+                text: 'What does this code print?',
+                code: 'nums = [3, 1, 4, 1, 5]\nnums.sort()\nprint(nums[0])',
+                options: ['3', '1', '5', '4'],
+                correct: 1
+            },
+            {
+                text: 'What does this code print?',
+                code: 'a = 7\nb = 2\nprint(a // b)',
+                options: ['3.5', '4', '2', '3'],
+                correct: 3
+            }
+        ]
+    },
+    {
+        id: 3,
+        header: '🔒 LOCK 3 — FINAL CIPHER',
+        sub: 'SOLVE THE RIDDLES — 5 CLUES STAND BETWEEN YOU AND FREEDOM',
+        qLabel: 'RIDDLE',
+        totalQ: 5,
+        pointsPerAttempt: [70, 40, 20],
+        questions: [
+            {
+                text: 'I store your data but vanish the moment power is off. Fast as lightning but forget everything. What am I?',
+                code: null,
+                options: ['SSD', 'Hard Drive', 'RAM', 'ROM'],
+                correct: 2
+            },
+            {
+                text: 'I am the boss of the computer. Every instruction passes through me. Nothing runs without me. What am I?',
+                code: null,
+                options: ['RAM', 'GPU', 'Motherboard', 'CPU'],
+                correct: 3
+            },
+            {
+                text: 'I am a set of rules two computers follow when they want to talk to each other. What am I?',
+                code: null,
+                options: ['Algorithm', 'Protocol', 'Compiler', 'Variable'],
+                correct: 1
+            },
+            {
+                text: 'I am the process of finding and fixing mistakes in your code. Developers spend most of their time doing me. What am I?',
+                code: null,
+                options: ['Compiling', 'Deploying', 'Debugging', 'Rendering'],
+                correct: 2
+            },
+            {
+                text: 'I am a step by step set of instructions written to solve a specific problem. Recipes and directions are real world versions of me. What am I?',
+                code: null,
+                options: ['Function', 'Loop', 'Variable', 'Algorithm'],
+                correct: 3
+            }
             ]
         }
     ],
