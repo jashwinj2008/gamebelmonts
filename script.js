@@ -3859,7 +3859,7 @@ const Level5 = {
         const codeBlock = document.getElementById('l5-code-block');
         if (q.code) {
             codeBlock.style.display = 'block';
-            codeBlock.innerHTML = this.highlightCode(q.code);
+            codeBlock.textContent = q.code;
         } else {
             codeBlock.style.display = 'none';
         }
@@ -3881,19 +3881,6 @@ const Level5 = {
 
         document.getElementById('l5-pts-feedback').style.display = 'none';
         this.updateProgressBar();
-    },
-
-    highlightCode(code) {
-        const keywords = /\b(for|in|print|sort|sum|True|False|None|if|else|elif|return|def|import|from|class|while|break|continue|and|or|not)\b/g;
-        return code.split('\n').map((line, i) => {
-            const num = `<span class="l5-line-num">${(i + 1).toString().padStart(2,' ')}</span>`;
-            const hl = line
-                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-                .replace(keywords, '<span class="l5-kw">$1</span>')
-                .replace(/(".*?"|'.*?')/g, '<span class="l5-str">$1</span>')
-                .replace(/\b(\d+)\b/g, '<span class="l5-num">$1</span>');
-            return `<div class="l5-code-line">${num}  ${hl}</div>`;
-        }).join('');
     },
 
     updateAttemptDots() {
